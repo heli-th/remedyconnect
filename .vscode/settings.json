@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/fe0f1b2d-bb48-46f6-9b59-838f68536c5d/resourceGroups/MedicleContent/providers/Microsoft.Web/sites/dudacollection",
+    "appService.deploySubpath": "."
+}
