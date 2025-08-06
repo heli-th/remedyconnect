@@ -407,6 +407,9 @@ ul.responsive-list {
     }
 }
 
+.disclaimer {
+    font-size: small;
+}
 /* --- Responsive disclaimers and strong paragraphs --- */
 @media (max-width: 600px) {
     .disclaimer {
@@ -445,3 +448,7 @@ ul.responsive-list {
 .remedy-aap{margin:1em;display:inline-block;}
 .remedy-aap img{height:35px;width:auto;max-width:100%;}
 .remedy-pdflinks{font-size:0.8em;}
+
+.navlink {
+   cursor: pointer;
+}
