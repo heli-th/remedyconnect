@@ -62,7 +62,7 @@ const Widget = async (req, res) => {
                 let html = "";
                 // Conditionally render Go Back button
                 const goBackBtn = displayType === "dropdown" ? "" : `<button id="go-back-btn" class="go-back-btn">&larr; Go Back</button>`;
-                console.log("Publisher:", safe(record["Publisher"]));
+                // console.log("Publisher:", safe(record["Publisher"]));
                 if (safe(record["Publisher"]) === "Self Care Decisions") {
                     html = `
                      <div class="article-detail-full">
@@ -111,7 +111,7 @@ const Widget = async (req, res) => {
                             ${safe(record["Copyright"])}
                         </p>
                         <p class="disclaimer" style="font-weight: 700; margin-top: 2px;">
-                            Reviewed:  ${safe(record["Last Reviewed"])}/Updated: ${safe(record["Last Updated"])}
+                            Reviewed:  ${safe(record["Last Reviewed"].split("T")[0])}/Updated: ${safe(record["Last Updated"].split("T")[0])}
                         </p>
                         </section>
                         ${goBackBtn}
@@ -165,7 +165,7 @@ const Widget = async (req, res) => {
                             ${safe(record["Copyright"])}
                         </p>
                         <p class="disclaimer" style="font-weight: 700; margin-top: 2px;">
-                            Reviewed:  ${safe(record["Last Reviewed"])}/Updated: ${safe(record["Last Updated"])}
+                            Reviewed:  ${safe(record["Last Reviewed"].split("T")[0])}/Updated: ${safe(record["Last Updated"].split("T")[0])}
                         </p>
                         </section>
                         ${goBackBtn}
@@ -187,7 +187,7 @@ const Widget = async (req, res) => {
                             ${safe(record["Copyright"])}
                         </p>
                         <p class="disclaimer" style="font-weight: 700; margin-top: 2px;">
-                            Reviewed:  ${safe(record["Last Reviewed"])}/Updated: ${safe(record["Last Updated"])}
+                            Reviewed:  ${safe(record["Last Reviewed"].split("T")[0])}/Updated: ${safe(record["Last Updated"].split("T")[0])}
                         </p>
                         </section>
                         ${goBackBtn}
@@ -212,7 +212,7 @@ const Widget = async (req, res) => {
                             ${safe(record["Copyright"])}
                         </p>
                         <p class="disclaimer" style="font-weight: 700; margin-top: 2px;">
-                            Reviewed:  ${safe(record["Last Reviewed"])}/Updated: ${safe(record["Last Updated"])}
+                            Reviewed:  ${safe(record["Last Reviewed"].split("T")[0])}/Updated: ${safe(record["Last Updated"].split("T")[0])}
                         </p>
                         </section>
                         ${goBackBtn}
