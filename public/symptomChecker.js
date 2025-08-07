@@ -3,6 +3,7 @@ const SERVER_URL = "http://localhost:3000/";
 (async () => {
   const container = document.querySelector(".symptom-checker-widget");
   const loader = document.getElementById("loader-overlay");
+  const key = container.getAttribute("data-key");
 
   if (!container || !loader) {
     return console.error("Wrong code snippet: container or loader not found.");
@@ -46,6 +47,20 @@ const SERVER_URL = "http://localhost:3000/";
     <area shape="poly" coords="216, 73, 201, 90, 192, 100, 195, 102, 191, 104, 184, 104, 178, 105, 171, 105, 161, 100, 161, 104, 163, 106, 158, 106, 153, 106, 153, 108, 156, 109, 152, 111, 150, 113, 154, 113, 156, 113, 152, 116, 155, 117, 156, 117, 157, 117, 156, 120, 158, 121, 160, 121, 164, 119, 168, 119, 174, 117, 180, 117, 184, 117, 188, 117, 192, 117, 199, 117, 200, 117, 205, 111, 207, 108, 208, 100, 216, 77, 229, 72, 245, 76, 257, 80, 264, 85, 273, 92, 279, 95, 282, 97, 293, 98, 299, 98, 295, 103, 294, 105, 299, 107, 296, 109, 294, 107, 297, 111, 298, 114, 292, 112, 290, 110, 292, 114, 283, 110, 284, 112, 284, 116, 279, 112, 275, 107, 272, 103, 268, 100, 261, 96, 254, 96, 253, 99, 249, 95, 243, 94, 239, 92, 235, 86, 235, 81, 231, 74" href="#" alt="Arms" data-key="arms">
   `;
   container.appendChild(map);
+  // Drawer Sidebar
+  container.insertAdjacentHTML(
+    "beforeend",
+    `
+    <!-- Drawer Sidebar -->
+    <div id="drawerOverlay" style="display:none;"></div>
+    <div id="drawer" class="drawer">
+        <button id="drawerClose">&times;</button>
+        <div id="drawerContent">
+            <!-- Content will be injected here -->
+        </div>
+    </div>
+    `
+  );
 
   function loadScript(src, callback) {
     const script = document.createElement("script");
@@ -62,7 +77,7 @@ const SERVER_URL = "http://localhost:3000/";
     loadScript(
       "https://unpkg.com/imagemapster/dist/jquery.imagemapster.min.js",
       function () {
-        $(function () {
+        $(async function () {
           // Assume `data` is available globally or fetched elsewhere
           // If not, you may need to fetch or define it before using
           const userAgent =
@@ -145,22 +160,22 @@ const SERVER_URL = "http://localhost:3000/";
             $image.trigger("load");
           }
 
-          let allArticles = data?.config?.Articles;
+          let detailUrl = `${SERVER_URL}api/symptom-checker?key=${key}`;
+          const res = await fetch(detailUrl);
+          const allArticles = await res.json();
+
+          // let allArticles = data?.config?.Articles;
           const groupedBySubClass = {};
 
           if (allArticles && allArticles.length > 0) {
             allArticles.forEach((article) => {
-              const subclasses = article.SubClass.split(",").map((s) =>
-                s.trim()
-              );
-              subclasses.forEach((sub) => {
-                if (!groupedBySubClass[sub]) {
-                  groupedBySubClass[sub] = [];
-                }
-                groupedBySubClass[sub].push({
-                  ArticleTitle: article.ArticleTitle,
-                  ArticleURL: `${data?.config?.DynamicPage}/${article.ArticleURL}`,
-                });
+              let sub = article.fields.SubClass;
+              if (!groupedBySubClass[sub]) {
+                groupedBySubClass[sub] = [];
+              }
+              groupedBySubClass[sub].push({
+                ArticleTitle: article.fields["Article HTML"],
+                ArticleURL: `${SERVER_URL}/${article.fields["Article URL"]}`,
               });
             });
           }
