@@ -1,0 +1,77 @@
+.symptom-checker-widget {
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+}
+
+#drawerOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: none;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 370px;
+  height: 100%;
+  background: #f9fafc;
+  box-shadow: -2px 0 16px rgba(0, 0, 0, 0.18);
+  z-index: 1001;
+  padding: 0;
+  overflow-y: auto;
+  border-radius: 12px 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.45s, opacity 0.35s;
+}
+
+.drawer.open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#drawerHeader {
+  background: #0078d4;
+  color: white;
+  padding: 16px;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#drawerClose {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 2em;
+  color: red;
+  cursor: pointer;
+}
+
+#drawerContent {
+  padding: 28px 24px;
+}
+
+@media (max-width: 600px) {
+  .drawer {
+    width: 100vw;
+    border-radius: 0;
+  }
+  #drawerHeader {
+    border-radius: 0;
+  }
+}
