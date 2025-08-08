@@ -1,5 +1,8 @@
 .symptom-checker-widget {
-  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 95vh;
   max-width: 100%;
   position: relative;
 }

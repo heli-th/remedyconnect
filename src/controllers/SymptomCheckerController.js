@@ -1,4 +1,6 @@
 const axios = require("axios");
+const NodeCache = require("node-cache");
+const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
 const { getRecordByAccessKey } = require("../utils/airtableAPIs");
 
 const symptomCheckerData = async (req, res) => {
@@ -32,6 +34,14 @@ const symptomCheckerData = async (req, res) => {
     }
   }
 
+  // Build cache key based on query params
+  const cacheKey = `symptom-checker:${key}:${table}:${view}`;
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    res.setHeader("Content-Type", "text/json");
+    return res.send(cachedData);
+  }
+
   const urlBase = `https://api.airtable.com/v0/${base}/${encodeURIComponent(
     table
   )}?view=${encodeURIComponent(view)}`;
@@ -47,6 +57,8 @@ const symptomCheckerData = async (req, res) => {
     if (data.records && data.records.length > 0) {
       allRecords.push(...data.records);
     }
+
+    cache.set(cacheKey, allRecords);
 
     res.setHeader("Content-Type", "text/json");
     res.send(allRecords);

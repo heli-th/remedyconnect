@@ -8,6 +8,8 @@ const SERVER_URL = "http://localhost:3000/";
   if (!container || !loader) {
     return console.error("Wrong code snippet: container or loader not found.");
   }
+
+  loader.classList.remove("hide");
   // Remove previous content if any
   container.innerHTML = "";
 
@@ -160,9 +162,21 @@ const SERVER_URL = "http://localhost:3000/";
             $image.trigger("load");
           }
 
-          let detailUrl = `${SERVER_URL}api/symptom-checker?key=${key}`;
-          const res = await fetch(detailUrl);
-          const allArticles = await res.json();
+          loader.classList.remove("hide");
+
+          let allArticles;
+          try {
+            let detailUrl = `${SERVER_URL}api/symptom-checker?key=${key}`;
+            const res = await fetch(detailUrl);
+            allArticles = await res.json();
+            loader.classList.add("hide");
+            setTimeout(() => {
+              loader.style.display = "none";
+            }, 400);
+          } catch (err) {
+            console.error("Failed to fetch articles:", err);
+            allArticles = [];
+          }
 
           // let allArticles = data?.config?.Articles;
           const groupedBySubClass = {};
