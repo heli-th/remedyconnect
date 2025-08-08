@@ -1,14 +1,15 @@
 // src/app.js
-const cors = require('cors');
-const express = require('express');
-const mongoose = require('mongoose');
+const cors = require("cors");
+const express = require("express");
+const mongoose = require("mongoose");
 //const config = require('./config/config');
 //const authRoutes = require('./routes/authRoutes');
 //const customerRoutes = require('./routes/customerRoutes');
-const articleRoutes = require('./routes/articleRoutes');
-const locationRoutes = require('./routes/locationRoutes');
-const codeRoutes = require('./routes/codeRoutes');
-const cronJobs = require('./jobs/cronJobs');
+const articleRoutes = require("./routes/articleRoutes");
+const locationRoutes = require("./routes/locationRoutes");
+const codeRoutes = require("./routes/codeRoutes");
+const symptomCheckerRoutes = require("./routes/symptomCheckerRoute");
+const cronJobs = require("./jobs/cronJobs");
 
 const app = express();
 app.use(cors());
@@ -21,6 +22,7 @@ app.use("/static", express.static("public"));
 app.use("/api/articles", articleRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/code", codeRoutes);
+app.use("/api", symptomCheckerRoutes);
 
 cronJobs.start();
 
