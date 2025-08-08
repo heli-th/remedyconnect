@@ -1,4 +1,4 @@
-const SERVER_URL = "http://localhost:3000/";
+const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".symptom-checker-widget");
