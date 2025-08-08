@@ -1,12 +1,27 @@
+// const SERVER_URL = "http://localhost:3000/";
 const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".symptom-checker-widget");
   const loader = document.getElementById("loader-overlay");
   const key = container.getAttribute("data-key");
+  const externalURL = container.getAttribute("data-detailPage-url");
 
   if (!container || !loader) {
     return console.error("Wrong code snippet: container or loader not found.");
+  }
+
+  if (!key) {
+    container.innerHTML = "Missing data attributes: data-key.";
+    return;
+  }
+  if (!externalURL) {
+    container.innerHTML = `<pre>Please include a detail page in the existing code snippet by adding the attribute data-detailPage-url.
+Example usage:
+data-detailPage-url="https://yourdomain.com/YOUR-DETAIL-PAGE-URL"
+
+Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
+    return;
   }
 
   loader.classList.remove("hide");
@@ -189,7 +204,7 @@ const SERVER_URL = "https://externalcontent.remedyconnect.com/";
               }
               groupedBySubClass[sub].push({
                 ArticleTitle: article.fields["Article Title"],
-                ArticleURL: `${SERVER_URL}/${article.fields["Article URL"]}`,
+                ArticleURL: `${externalURL}/${article.fields["Article URL"]}`,
               });
             });
           }
