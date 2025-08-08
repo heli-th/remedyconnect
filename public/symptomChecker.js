@@ -188,7 +188,7 @@ const SERVER_URL = "http://localhost:3000/";
                 groupedBySubClass[sub] = [];
               }
               groupedBySubClass[sub].push({
-                ArticleTitle: article.fields["Article HTML"],
+                ArticleTitle: article.fields["Article Title"],
                 ArticleURL: `${SERVER_URL}/${article.fields["Article URL"]}`,
               });
             });
