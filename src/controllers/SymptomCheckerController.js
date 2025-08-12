@@ -4,7 +4,7 @@ const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
 const { getRecordByAccessKey } = require("../utils/airtableAPIs");
 
 const symptomCheckerData = async (req, res) => {
-  const { key } = req.query;
+  const { key, slug } = req.query;
   const table = "Articles";
   const view = "Is Your Child Sick";
 
@@ -35,7 +35,7 @@ const symptomCheckerData = async (req, res) => {
   }
 
   // Build cache key based on query params
-  const cacheKey = `symptom-checker:${key}:${table}:${view}`;
+  const cacheKey = `symptom-checker:${key}:${table}:${view}:${slug || ""}`;
   const cachedData = cache.get(cacheKey);
   if (cachedData) {
     res.setHeader("Content-Type", "text/json");
@@ -49,10 +49,44 @@ const symptomCheckerData = async (req, res) => {
   let allRecords = [];
 
   try {
+    if (slug) {
+      try {
+        const filterByFormula = `{Article URL} = '${slug}'`;
+        const response = await axios.get(urlBase, {
+          headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` },
+          params: {
+            filterByFormula,
+            maxRecords: 1,
+          },
+        });
+        if (response.data.records && response.data.records.length > 0) {
+          const record = response.data.records[0].fields;
+          // Helper function to safely render HTML fields
+          const safe = (val) => val || "";
+          // Helper for boolean display
+          const yesNo = (val) =>
+            val === true ? "Yes" : val === false ? "No" : "";
+          // Helper for array display
+          const arr = (val) =>
+            Array.isArray(val) ? val.join(", ") : val || "";
+          let html = "";
+          // Conditionally render Go Back button
+          const goBackBtn = `<button id="go-back-btn" class="go-back-btn">&larr; Go Back</button>`;
+          // console.log("Publisher:", safe(record["Publisher"]));
+
+          res.setHeader("Content-Type", "text/html");
+          return res.send(`<body>${record["Article HTML"]}</body>`);
+          x;
+        } else {
+          return res.status(404).send("Article not found.");
+        }
+      } catch (err) {
+        return res.status(500).send("Failed to load article detail.");
+      }
+    }
     const response = await axios.get(urlBase, {
       headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` },
     });
-
     const data = response.data;
     if (data.records && data.records.length > 0) {
       allRecords.push(...data.records);

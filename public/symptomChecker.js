@@ -28,18 +28,81 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
   // Remove previous content if any
   container.innerHTML = "";
 
-  // Create the image element
-  const img = document.createElement("img");
-  img.id = "kid-map";
-  img.alt = "KID Map";
-  img.src = SERVER_URL + "static/images/Symptom-Checker-Kids-320px.png";
-  img.useMap = "#kid-map";
-  container.appendChild(img);
+  function getSlugFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("slug")) return params.get("slug");
+    const pathParts = window.location.pathname.split("/");
+    // const last = pathParts[pathParts.length - 1];
+    // if (last && !last.includes('.') && last !== '') return last;
+    return null;
+  }
 
-  // Create the map element
-  const map = document.createElement("map");
-  map.name = "kid-map";
-  map.innerHTML = `
+  async function showArticleDetail(slug) {
+    loader.classList.remove("hide");
+    try {
+      let detailUrl = `${SERVER_URL}api/symptom-checker?key=${key}&slug=${encodeURIComponent(
+        slug
+      )}`;
+      const res = await fetch(detailUrl);
+      const html = await res.text();
+      container.innerHTML = html;
+
+      // Attach go-back handler
+      container.querySelectorAll(".go-back-btn").forEach((btn) => {
+        btn.onclick = () => {
+          // Remove slug from URL and reload dropdown
+          const params = new URLSearchParams(window.location.search);
+          params.delete("slug");
+          history.pushState(
+            {},
+            "",
+            `${window.location.pathname.split("?")[0]}${
+              params.toString() ? "?" + params.toString() : ""
+            }`
+          );
+          showContent();
+        };
+      });
+
+      return;
+    } catch (err) {
+      container.innerHTML = "Failed to load content.";
+    } finally {
+      loader.classList.add("hide");
+      setTimeout(() => {
+        loader.style.display = "none";
+      }, 400);
+    }
+  }
+
+  function showContent() {
+    const slug = getSlugFromUrl();
+    if (slug) {
+      showArticleDetail(slug);
+    } else {
+      loadWidgetContent();
+    }
+  }
+
+  showContent();
+
+  window.addEventListener("popstate", () => {
+    showContent();
+  });
+
+  function loadWidgetContent() {
+    // Create the image element
+    const img = document.createElement("img");
+    img.id = "kid-map";
+    img.alt = "KID Map";
+    img.src = SERVER_URL + "static/images/Symptom-Checker-Kids-320px.png";
+    img.useMap = "#kid-map";
+    container.appendChild(img);
+
+    // Create the map element
+    const map = document.createElement("map");
+    map.name = "kid-map";
+    map.innerHTML = `
     <!-- 🧒 Boy DATA -->
     <area shape="poly" coords="100, 48, 94, 43, 89, 48, 90, 53, 95, 58, 94, 61, 89, 59, 87, 55, 84, 50, 81, 48, 80, 42, 79, 39, 79, 33, 79, 29, 80, 25, 82, 22, 85, 20, 89, 18, 94, 16, 96, 15, 103, 14, 107, 14, 113, 14, 117, 14, 121, 16, 124, 18, 128, 19, 133, 23, 135, 26, 137, 30, 136, 32, 133, 32, 126, 32, 118, 34, 114, 33, 112, 33, 106, 33, 106, 38, 106, 42, 105, 44" href="#" alt="Boy Head" data-key="head">
     <area shape="poly" coords="106, 39, 119, 39, 127, 39, 133, 43, 134, 56, 132, 59, 124, 59, 116, 53, 111, 51, 101, 48, 104, 43" href="#" alt="Boy Eyes" data-key="eyes">
@@ -63,11 +126,11 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
     <area shape="poly" coords="209, 138, 224, 144, 237, 145, 251, 142, 257, 141, 262, 146, 258, 150, 262, 154, 269, 151, 272, 146, 280, 143, 286, 148, 291, 154, 293, 159, 294, 163, 294, 170, 291, 173, 287, 172, 282, 167, 280, 165, 275, 161, 270, 164, 261, 170, 259, 171, 252, 171, 243, 164, 240, 158, 236, 158, 235, 153, 233, 150, 229, 153, 225, 158, 221, 158, 216, 163, 213, 168, 211, 174, 211, 179, 209, 185, 206, 190, 204, 194, 203, 199, 202, 205, 200, 209, 192, 209, 184, 206, 178, 203, 174, 201, 172, 196, 172, 192, 176, 191, 179, 191, 182, 191, 185, 192, 187, 192, 191, 189, 194, 184, 196, 175, 197, 171, 198, 164, 198, 160, 202, 151, 204, 149, 205, 145, 207, 141" href="#" alt="Legs" data-key="legs">
     <area shape="poly" coords="216, 73, 201, 90, 192, 100, 195, 102, 191, 104, 184, 104, 178, 105, 171, 105, 161, 100, 161, 104, 163, 106, 158, 106, 153, 106, 153, 108, 156, 109, 152, 111, 150, 113, 154, 113, 156, 113, 152, 116, 155, 117, 156, 117, 157, 117, 156, 120, 158, 121, 160, 121, 164, 119, 168, 119, 174, 117, 180, 117, 184, 117, 188, 117, 192, 117, 199, 117, 200, 117, 205, 111, 207, 108, 208, 100, 216, 77, 229, 72, 245, 76, 257, 80, 264, 85, 273, 92, 279, 95, 282, 97, 293, 98, 299, 98, 295, 103, 294, 105, 299, 107, 296, 109, 294, 107, 297, 111, 298, 114, 292, 112, 290, 110, 292, 114, 283, 110, 284, 112, 284, 116, 279, 112, 275, 107, 272, 103, 268, 100, 261, 96, 254, 96, 253, 99, 249, 95, 243, 94, 239, 92, 235, 86, 235, 81, 231, 74" href="#" alt="Arms" data-key="arms">
   `;
-  container.appendChild(map);
-  // Drawer Sidebar
-  container.insertAdjacentHTML(
-    "beforeend",
-    `
+    container.appendChild(map);
+    // Drawer Sidebar
+    container.insertAdjacentHTML(
+      "beforeend",
+      `
     <!-- Drawer Sidebar -->
     <div id="drawerOverlay" style="display:none;"></div>
     <div id="drawer" class="drawer">
@@ -77,7 +140,8 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
         </div>
     </div>
     `
-  );
+    );
+  }
 
   function loadScript(src, callback) {
     const script = document.createElement("script");
@@ -204,7 +268,7 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
               }
               groupedBySubClass[sub].push({
                 ArticleTitle: article.fields["Article Title"],
-                ArticleURL: `${externalURL}/${article.fields["Article URL"]}`,
+                ArticleURL: `${externalURL}?slug=${article.fields["Article URL"]}`,
               });
             });
           }
@@ -341,6 +405,8 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
             const key = $(this).data("key");
             openDrawer(key);
           });
+
+          // Listen for browser navigation (back/forward)
         });
       }
     );
