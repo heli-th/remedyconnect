@@ -1,5 +1,5 @@
-// const SERVER_URL = "http://localhost:3000/";
-const SERVER_URL = "https://externalcontent.remedyconnect.com/";
+const SERVER_URL = "http://localhost:3000/";
+// const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".symptom-checker-widget");
@@ -35,6 +35,12 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
   img.src = SERVER_URL + "static/images/Symptom-Checker-Kids-320px.png";
   img.useMap = "#kid-map";
   container.appendChild(img);
+
+  // theme
+  function setTheme(theme) {
+    document.documentElement.className = theme;
+  }
+  setTheme("theme3");
 
   // Create the map element
   const map = document.createElement("map");
