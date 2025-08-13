@@ -74,9 +74,10 @@ const symptomCheckerData = async (req, res) => {
           const goBackBtn = `<button id="go-back-btn" class="go-back-btn">&larr; Go Back</button>`;
           // console.log("Publisher:", safe(record["Publisher"]));
 
+          cache.set(cacheKey, `<body>${record["Article HTML"]}</body>`);
+
           res.setHeader("Content-Type", "text/html");
           return res.send(`<body>${record["Article HTML"]}</body>`);
-          x;
         } else {
           return res.status(404).send("Article not found.");
         }

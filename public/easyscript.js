@@ -150,7 +150,7 @@
                 const res = await fetch(detailUrl);
                 const html = await res.text();
                 if (html.includes('id="go-back-btn"') || html.includes('class="go-back-btn"')) {
-                    container.innerHTML = html;
+                    container.innerHTML = html + `<footer style="margin-top:2em;text-align:center;"><small>Powered by <a href="https://www.remedyconnect.com" target="_blank" rel="nofollow">RemedyConnect</a>. Please read our <a href="https://www.remedyconnect.com/disclaimer" target="_blank" rel="nofollow">disclaimer</a>.</small></footer>`;
                 } else {
                     showDetailFromHtml(slug);
                     return;
