@@ -1,12 +1,29 @@
-.symptom-checker-widget {
+body {
+  padding: 0;
+  margin: 0;
+}
+
+.symptom-checker-image {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 95vh;
+  height: 100vh;
   max-width: 100%;
   position: relative;
   font-family: Poppins, "Poppins Fallback";
 }
+
+.symptomChecker-content {
+  background-color: #ebebec;
+  width: calc(100% - 40px);
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 12px;
+}
+
+
 
 #drawerOverlay {
   position: fixed;
@@ -129,6 +146,7 @@
     width: 100vw;
     border-radius: 0;
   }
+
   #drawerHeader {
     border-radius: 0;
   }
@@ -138,6 +156,7 @@
   h3 {
     font-size: 24px;
   }
+
   h4 {
     font-size: 20px;
   }
