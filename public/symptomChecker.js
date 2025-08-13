@@ -1,5 +1,5 @@
-// const SERVER_URL = "http://localhost:3000/";
-const SERVER_URL = "https://externalcontent.remedyconnect.com/";
+const SERVER_URL = "http://localhost:3000/";
+// const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".symptom-checker-widget");
@@ -45,7 +45,7 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
       )}`;
       const res = await fetch(detailUrl);
       const html = await res.text();
-      container.innerHTML = html;
+      container.innerHTML = `<div class="symptomChecker-content">${html}</div>`;
 
       // Attach go-back handler
       container.querySelectorAll(".go-back-btn").forEach((btn) => {
@@ -127,6 +127,9 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
     <area shape="poly" coords="216, 73, 201, 90, 192, 100, 195, 102, 191, 104, 184, 104, 178, 105, 171, 105, 161, 100, 161, 104, 163, 106, 158, 106, 153, 106, 153, 108, 156, 109, 152, 111, 150, 113, 154, 113, 156, 113, 152, 116, 155, 117, 156, 117, 157, 117, 156, 120, 158, 121, 160, 121, 164, 119, 168, 119, 174, 117, 180, 117, 184, 117, 188, 117, 192, 117, 199, 117, 200, 117, 205, 111, 207, 108, 208, 100, 216, 77, 229, 72, 245, 76, 257, 80, 264, 85, 273, 92, 279, 95, 282, 97, 293, 98, 299, 98, 295, 103, 294, 105, 299, 107, 296, 109, 294, 107, 297, 111, 298, 114, 292, 112, 290, 110, 292, 114, 283, 110, 284, 112, 284, 116, 279, 112, 275, 107, 272, 103, 268, 100, 261, 96, 254, 96, 253, 99, 249, 95, 243, 94, 239, 92, 235, 86, 235, 81, 231, 74" href="#" alt="Arms" data-key="arms">
   `;
     container.appendChild(map);
+    // Add the image map class
+    container.classList.add("symptom-checker-image");
+
     // Drawer Sidebar
     container.insertAdjacentHTML(
       "beforeend",
