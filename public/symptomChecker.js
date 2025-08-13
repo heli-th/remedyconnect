@@ -3,7 +3,7 @@ const SERVER_URL = "http://localhost:3000/";
 
 (async () => {
   const container = document.querySelector(".symptom-checker-widget");
-  const loader = document.getElementById("loader-overlay");
+  const loader = document.getElementById("loader-container");
   const key = container.getAttribute("data-key");
   const externalURL = container.getAttribute("data-detailPage-url");
 
