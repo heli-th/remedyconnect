@@ -77,7 +77,9 @@ const symptomCheckerData = async (req, res) => {
           cache.set(cacheKey, `<body>${record["Article HTML"]}</body>`);
 
           res.setHeader("Content-Type", "text/html");
-          return res.send(`<body>${record["Article HTML"]}</body>`);
+          return res.send(
+            `<body><h1>${record["Article Title"]}</h1>${record["Article HTML"]}</body>`
+          );
         } else {
           return res.status(404).send("Article not found.");
         }
