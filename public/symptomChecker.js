@@ -1,5 +1,5 @@
-// const SERVER_URL = "http://localhost:3000/";
-const SERVER_URL = "https://externalcontent.remedyconnect.com/";
+const SERVER_URL = "http://localhost:3000/";
+// const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".symptom-checker-widget");
@@ -45,7 +45,14 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
       )}`;
       const res = await fetch(detailUrl);
       const html = await res.text();
-      container.innerHTML = html;
+      container.innerHTML =
+        html +
+        `<footer style="margin-top:24px;text-align:center;">
+        <small>
+          Powered by <a href="https://www.remedyconnect.com" target="_blank" rel="nofollow">RemedyConnect</a>.
+          Please read our <a href="https://www.remedyconnect.com/disclaimer" target="_blank" rel="nofollow">disclaimer</a>.
+        </small>
+      </footer>`;
 
       // Attach go-back handler
       container.querySelectorAll(".go-back-btn").forEach((btn) => {
