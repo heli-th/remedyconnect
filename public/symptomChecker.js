@@ -1,5 +1,5 @@
-const SERVER_URL = "http://localhost:3000/";
-// const SERVER_URL = "https://externalcontent.remedyconnect.com/";
+// const SERVER_URL = "http://localhost:3000/";
+const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".symptom-checker-widget");
@@ -99,6 +99,7 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
 
   function loadWidgetContent() {
     // Create the image element
+    container.innerHTML = "";
     const img = document.createElement("img");
     img.id = "kid-map";
     img.alt = "KID Map";

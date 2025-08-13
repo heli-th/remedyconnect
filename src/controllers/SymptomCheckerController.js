@@ -69,17 +69,90 @@ const symptomCheckerData = async (req, res) => {
           // Helper for array display
           const arr = (val) =>
             Array.isArray(val) ? val.join(", ") : val || "";
+
           let html = "";
           // Conditionally render Go Back button
-          const goBackBtn = `<button id="go-back-btn" class="go-back-btn">&larr; Go Back</button>`;
-          // console.log("Publisher:", safe(record["Publisher"]));
 
-          cache.set(cacheKey, `<body>${record["Article HTML"]}</body>`);
+          // console.log("Publisher:", safe(record["Publisher"]));
+          if (
+            safe(record["Publisher"]) === "Self Care Decisions" ||
+            safe(record["Publisher"]) === "Self Care Decisions Spanish"
+          ) {
+            html = `
+                     <div class="article-detail-full">
+
+                    <h2 class="heading">${
+                      safe(record["Article Title"]) || "Untitled"
+                    }</h2>
+                    <main>
+                        <section>
+                        ${safe(record["Article Summary"])}
+                        </section>
+
+                        <section>
+                        ${safe(record["Article HTML"])}
+                        </section>
+
+                        <section class="when-to-call">
+                        <h3>When to Call for ${
+                          safe(record["Article Title"]) || "Untitled"
+                        }</h3>
+                        <div class="call-grid" role="region" aria-label="When to Call for ${
+                          safe(record["Article Title"]) || "Untitled"
+                        }">
+                             ${
+                               safe(record["HTML Column 1"])
+                                 ? `
+                                <div class="call-box" tabindex="0" aria-labelledby="call911Title">
+                                    ${safe(record["HTML Column 1"])}
+                                </div>`
+                                 : ""
+                             }
+                            ${
+                              safe(record["HTML Column 2"])
+                                ? `
+                                <div class="call-box" tabindex="0" aria-labelledby="contact24Title">
+                                    ${safe(record["HTML Column 2"])}
+                                </div>`
+                                : ""
+                            }
+                            ${
+                              safe(record["HTML Column 3"])
+                                ? `
+                                <div class="call-box" tabindex="0" aria-labelledby="selfCareTitle">
+                                    ${safe(record["HTML Column 3"])}
+                                </div>`
+                                : ""
+                            }
+                        </div>
+                        </section>
+
+                        <section>
+                        ${safe(record["HTML Advice"])}
+
+                        <p class="strong-p" style="margin-top: 24px;">Remember! Contact your doctor if you or your child develop any "Contact Your Doctor" symptoms.</p>
+
+                        <p class="disclaimer">
+                            <strong>Disclaimer:</strong> this health information is for educational purposes only. You, the reader, assume full responsibility for how you choose to use it.
+                        </p>
+                        <p class="disclaimer" style="font-weight: 700; margin-top: 4px;">
+                            ${safe(record["Copyright"])}
+                        </p>
+                        <p class="disclaimer" style="font-weight: 700; margin-top: 2px;">
+                            Reviewed:  ${safe(
+                              record["Last Reviewed"].split("T")[0]
+                            )}/Updated: ${safe(
+              record["Last Updated"].split("T")[0]
+            )}
+                        </p>
+                        </section>
+                    </main>`;
+          }
+
+          cache.set(cacheKey, `<body>${html}</body>`);
 
           res.setHeader("Content-Type", "text/html");
-          return res.send(
-            `<body><h1>${record["Article Title"]}</h1>${record["Article HTML"]}</body>`
-          );
+          return res.send(`<body>${html}</body>`);
         } else {
           return res.status(404).send("Article not found.");
         }
