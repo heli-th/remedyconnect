@@ -1,5 +1,8 @@
 const RESTRESPONSE = require("../utils/RESTRESPONSE");
 const { fetchAirtableView } = require("../services/AirtableService");
+const { default: axios } = require("axios");
+const cheerio = require("cheerio");
+const mammoth = require("mammoth");
 
 const BASE_ID = process.env.BASE_AIRTABLE_ID;
 
