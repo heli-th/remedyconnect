@@ -1,0 +1,147 @@
+/* Container styles */
+.kids-site-video-widget {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+  gap: 20px; /* space between items */
+  padding: 20px;
+}
+
+/* Video card */
+.video-item {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Thumbnail wrapper */
+.video-thumbnail {
+  width: 100%;
+  aspect-ratio: 16 / 9; /* keeps video/image ratio */
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.video-thumbnail img,
+.video-thumbnail iframe {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: 0;
+}
+
+/* Content inside card */
+.video-item h3 {
+  font-size: 1.1rem;
+  margin: 12px 16px 8px;
+  color: #222;
+}
+
+.video-item p {
+  flex-grow: 1;
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0 16px 16px;
+  line-height: 1.4;
+}
+
+/* Link button */
+.watch-video-link {
+  margin: 0 16px 16px;
+  padding: 10px 14px;
+  background: rgb(139 41 106);
+  color: #fff;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+.watch-video-link:hover {
+  background: #217dbb;
+}
+
+/* Responsive behavior */
+@media (max-width: 1024px) {
+  #your-container-id {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  #your-container-id {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* loader css */
+
+/* Fullscreen overlay for loader */
+.loader-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.6); /* optional background dim */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* above all content */
+}
+
+/* Loader spinner */
+.loader-overlay {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #ddd;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Hide the loader */
+.loader-container.hide {
+  display: none;
+}
+
+/* Show the loader */
+.loader-container.show {
+  display: flex;
+}
+
+/* Spin animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Override for remedy article body */
+.kids-site-video-widget .remedy-articleBody {
+  grid-column: 1 / -1; /* span full width */
+  display: block; /* reset grid */
+  padding: 0; /* remove extra padding if needed */
+}
+
+.kids-site-video-widget footer {
+  grid-column: 1 / -1; /* spans across all columns */
+  text-align: center; /* center align footer text */
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: #555;
+}
