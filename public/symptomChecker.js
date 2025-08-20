@@ -237,21 +237,31 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
             },
           };
 
-          $image
-            .on("load", function () {
-              if ($image.data("mapster")) {
-                $image.mapster("unbind");
-              }
-              $image.mapster({
-                ...(isMobile ? mobileOptions : desktopOptions),
-                onConfigured: function () {
-                  console.log("✅ Mapster binding complete!");
-                },
-              });
-            })
-            .each(function () {
-              if (this.complete) $(this).trigger("load");
-            });
+          // $image
+          //   .on("load", function () {
+          //     if ($image.data("mapster")) {
+          //       $image.mapster("unbind");
+          //     }
+          //     $image.mapster({
+          //       ...(isMobile ? mobileOptions : desktopOptions),
+          //       onConfigured: function () {
+          //         console.log("✅ Mapster binding complete!");
+          //       },
+          //     });
+          //   })
+          //   .each(function () {
+          //     if (this.complete) $(this).trigger("load");
+          //   });
+
+          if ($image.data("mapster")) {
+            $image.mapster("unbind");
+          }
+          $image.mapster({
+            ...(isMobile ? mobileOptions : desktopOptions),
+            onConfigured: function () {
+              console.log("✅ Mapster binding complete!");
+            },
+          });
 
           if ($image[0].complete) {
             $image.trigger("load");
