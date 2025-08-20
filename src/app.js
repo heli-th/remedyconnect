@@ -9,6 +9,7 @@ const articleRoutes = require("./routes/articleRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const codeRoutes = require("./routes/codeRoutes");
 const symptomCheckerRoutes = require("./routes/symptomCheckerRoute");
+const kidsSiteVideoRouter = require("./routes/kidsSiteVideoRouter");
 const cronJobs = require("./jobs/cronJobs");
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/articles", articleRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/code", codeRoutes);
 app.use("/api", symptomCheckerRoutes);
+app.use("/api", kidsSiteVideoRouter);
 
 cronJobs.start();
 
