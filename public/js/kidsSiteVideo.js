@@ -11,10 +11,6 @@ const SERVER_URL = "https://externalcontent.remedyconnect.com/";
     return console.error("Wrong code snippet: container or loader not found.");
   }
 
-  if (!key) {
-    container.innerHTML = "Missing data attributes: data-key.";
-    return;
-  }
   if (!externalURL) {
     container.innerHTML = `<pre>Please include a detail page in the existing code snippet by adding the attribute data-detailPage-url.
 Example usage:
