@@ -153,11 +153,21 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
     `
     );
   }
-
   function loadScript(src, callback) {
     const script = document.createElement("script");
     script.src = src;
-    script.onload = callback;
+    script.onload = function () {
+      console.log("Script loaded:", src);
+
+      // Check if the plugin is loaded
+      if (window.jQuery && typeof jQuery.fn.mapster === "function") {
+        console.log("ImageMapster plugin loaded successfully ✅");
+      } else {
+        console.warn("ImageMapster plugin NOT loaded ⚠️");
+      }
+
+      if (callback) callback();
+    };
     script.onerror = function () {
       console.error("Failed to load script:", src);
     };
