@@ -165,7 +165,12 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
   }
 
   // First load jQuery, then ImageMapster
-  loadScript("https://code.jquery.com/jquery-3.6.0.min.js", function () {
+  // Check if jQuery is already loaded
+  function isjQueryLoaded() {
+    return typeof window.jQuery !== "undefined";
+  }
+
+  function initImageMapster() {
     loadScript(
       "https://unpkg.com/imagemapster/dist/jquery.imagemapster.min.js",
       function () {
@@ -421,5 +426,11 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
         });
       }
     );
-  });
+  }
+
+  if (isjQueryLoaded()) {
+    initImageMapster();
+  } else {
+    loadScript("https://code.jquery.com/jquery-3.6.0.min.js", initImageMapster);
+  }
 })();
