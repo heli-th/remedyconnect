@@ -179,278 +179,275 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
   function isjQueryLoaded() {
     return typeof window.jQuery !== "undefined";
   }
-
   function initImageMapster() {
-    loadScript(
-      "https://unpkg.com/imagemapster/dist/jquery.imagemapster.min.js",
-      function () {
-        $(async function () {
-          // Assume `data` is available globally or fetched elsewhere
-          // If not, you may need to fetch or define it before using
-          const userAgent =
-            navigator.userAgent || navigator.vendor || window.opera;
-          const isMobileDevice =
-            /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
-              userAgent
-            );
-          const device = isMobileDevice ? "mobile" : "desktop";
+    if (window.jQuery) {
+      loadScript(
+        "https://unpkg.com/imagemapster/dist/jquery.imagemapster.min.js",
+        function () {
+          // Use vanilla JS instead of jQuery
+          (async function () {
+            const userAgent =
+              navigator.userAgent || navigator.vendor || window.opera;
+            const isMobileDevice =
+              /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+                userAgent
+              );
+            const device = isMobileDevice ? "mobile" : "desktop";
+            const isMobile = device === "mobile";
+            const image = document.getElementById("kid-map");
 
-          const isMobile = device === "mobile";
-          const $image = $("#kid-map");
-
-          const commonOptions = {
-            fillColor: "ff0000",
-            fillOpacity: 0.5,
-            stroke: true,
-            strokeColor: "000000",
-            strokeWidth: 0.1,
-            mapKey: "data-key",
-            singleSelect: true,
-            showToolTip: true,
-            fadeInterval: 50,
-            toolTipContainer:
-              '<div style="background:#fff;padding:5px;border:1px solid #ccc;"></div>',
-            toolTipClose: ["tooltip-click", "area-click", "image-mouseout"],
-          };
-
-          const mobileOptions = {
-            ...commonOptions,
-            enableAutoResizeSupport: true,
-            scaleMap: true,
-            render_highlight: {
-              fillColor: "2aff00",
+            // Mapster still requires jQuery, but we can avoid jQuery for everything else
+            const commonOptions = {
+              fillColor: "ff0000",
+              fillOpacity: 0.5,
               stroke: true,
+              strokeColor: "000000",
               strokeWidth: 0.1,
-            },
-            render_select: {
-              fillColor: "ff000c",
-              stroke: false,
-            },
-          };
+              mapKey: "data-key",
+              singleSelect: true,
+              showToolTip: true,
+              fadeInterval: 50,
+              toolTipContainer:
+                '<div style="background:#fff;padding:5px;border:1px solid #ccc;"></div>',
+              toolTipClose: ["tooltip-click", "area-click", "image-mouseout"],
+            };
 
-          const desktopOptions = {
-            ...commonOptions,
-            enableAutoResizeSupport: true,
-            autoResize: true,
-            configTimeout: 30000,
-            render_highlight: {
-              fillColor: "ff0000",
-              stroke: true,
-              altImage:
-                "https://irp.cdn-website.com/007fab07/dms3rep/multi/Symptom-Checker-Kids-Hover-1300px-Red.png",
-            },
-            render_select: {
-              fillColor: "ff0000",
-              stroke: false,
-              altImage:
-                "https://irp.cdn-website.com/007fab07/dms3rep/multi/Symptom-Checker-Kids-Hover-1300px-Red.png",
-            },
-          };
+            const mobileOptions = {
+              ...commonOptions,
+              enableAutoResizeSupport: true,
+              scaleMap: true,
+              render_highlight: {
+                fillColor: "2aff00",
+                stroke: true,
+                strokeWidth: 0.1,
+              },
+              render_select: {
+                fillColor: "ff000c",
+                stroke: false,
+              },
+            };
 
-          // $image
-          //   .on("load", function () {
-          //     if ($image.data("mapster")) {
-          //       $image.mapster("unbind");
-          //     }
-          //     $image.mapster({
-          //       ...(isMobile ? mobileOptions : desktopOptions),
-          //       onConfigured: function () {
-          //         console.log("✅ Mapster binding complete!");
-          //       },
-          //     });
-          //   })
-          //   .each(function () {
-          //     if (this.complete) $(this).trigger("load");
-          //   });
+            const desktopOptions = {
+              ...commonOptions,
+              enableAutoResizeSupport: true,
+              autoResize: true,
+              configTimeout: 30000,
+              render_highlight: {
+                fillColor: "ff0000",
+                stroke: true,
+                altImage:
+                  "https://irp.cdn-website.com/007fab07/dms3rep/multi/Symptom-Checker-Kids-Hover-1300px-Red.png",
+              },
+              render_select: {
+                fillColor: "ff0000",
+                stroke: false,
+                altImage:
+                  "https://irp.cdn-website.com/007fab07/dms3rep/multi/Symptom-Checker-Kids-Hover-1300px-Red.png",
+              },
+            };
 
-          if ($image.data("mapster")) {
-            $image.mapster("unbind");
-          }
-          $image.mapster({
-            ...(isMobile ? mobileOptions : desktopOptions),
-            onConfigured: function () {
-              console.log("✅ Mapster binding complete!");
-            },
-          });
+            // Wait for jQuery to be loaded, then run Mapster binding
+            const $image = window.jQuery(image);
+            if ($image.data("mapster")) {
+              $image.mapster("unbind");
+            }
+            $image.mapster({
+              ...(isMobile ? mobileOptions : desktopOptions),
+              onConfigured: function () {
+                console.log("✅ Mapster binding complete!");
+              },
+            });
+            if (image.complete) {
+              $image.trigger("load");
+            }
+            loader.classList.remove("hide");
 
-          if ($image[0].complete) {
-            $image.trigger("load");
-          }
+            let allArticles;
+            try {
+              let detailUrl = `${SERVER_URL}api/symptom-checker?key=${key}`;
+              const res = await fetch(detailUrl);
+              allArticles = await res.json();
+              loader.classList.add("hide");
+              setTimeout(() => {
+                loader.style.display = "none";
+              }, 400);
+            } catch (err) {
+              console.error("Failed to fetch articles:", err);
+              allArticles = [];
+            }
 
-          loader.classList.remove("hide");
+            const groupedBySubClass = {};
+            if (allArticles && allArticles.length > 0) {
+              allArticles.forEach((article) => {
+                let sub = article.fields.SubClass;
+                if (!groupedBySubClass[sub]) {
+                  groupedBySubClass[sub] = [];
+                }
+                groupedBySubClass[sub].push({
+                  ArticleTitle: article.fields["Article Title"],
+                  ArticleURL: `${externalURL}?slug=${article.fields["Article URL"]}`,
+                });
+              });
+            }
 
-          let allArticles;
-          try {
-            let detailUrl = `${SERVER_URL}api/symptom-checker?key=${key}`;
-            const res = await fetch(detailUrl);
-            allArticles = await res.json();
-            loader.classList.add("hide");
-            setTimeout(() => {
-              loader.style.display = "none";
-            }, 400);
-          } catch (err) {
-            console.error("Failed to fetch articles:", err);
-            allArticles = [];
-          }
+            const bodyPartDetails = {
+              head: {
+                name: "Head",
+                description:
+                  "Common symptoms: headache, dizziness, scalp issues.",
+                articles: groupedBySubClass?.["head-or-brain"],
+              },
+              eyes: {
+                name: "Eyes",
+                description:
+                  "Common symptoms: redness, itching, vision changes.",
+                articles: groupedBySubClass?.["eye"],
+              },
+              mouth: {
+                name: "Mouth",
+                description:
+                  "Common symptoms: mouth sores, tooth pain, dry mouth.",
+                articles: groupedBySubClass?.["mouth-or-teeth"],
+              },
+              ears: {
+                name: "Ears",
+                description:
+                  "Common symptoms: earache, hearing loss, discharge.",
+                articles: groupedBySubClass?.["ear"],
+              },
+              neck: {
+                name: "Neck or Back",
+                description: "Common symptoms: stiffness, pain, swelling.",
+                articles: groupedBySubClass?.["neck-or-back"],
+              },
+              arms: {
+                name: "Arms",
+                description: "Common symptoms: rashes, pain, swelling.",
+                articles: groupedBySubClass?.["arm-or-hand"],
+              },
+              chest: {
+                name: "Chest",
+                description:
+                  "Common symptoms: chest pain, cough, breathing issues.",
+                articles: groupedBySubClass?.["chest"],
+              },
+              abdomen: {
+                name: "Abdomen",
+                description: "Common symptoms: stomach ache, nausea, bloating.",
+                articles: groupedBySubClass?.["abdomen"],
+              },
+              genetical: {
+                name: "Genital Area or Urinary",
+                description: "Common symptoms: pain, itching, urinary issues.",
+                articles: groupedBySubClass?.["genitals-or-urinary"],
+              },
+              legs: {
+                name: "Legs",
+                description: "Common symptoms: pain, swelling, limping.",
+                articles: groupedBySubClass?.["leg-or-foot"],
+              },
+            };
 
-          // let allArticles = data?.config?.Articles;
-          const groupedBySubClass = {};
-
-          if (allArticles && allArticles.length > 0) {
-            allArticles.forEach((article) => {
-              let sub = article.fields.SubClass;
-              if (!groupedBySubClass[sub]) {
-                groupedBySubClass[sub] = [];
+            // Drawer logic in vanilla JS
+            function openDrawer(key) {
+              const part = bodyPartDetails[key];
+              if (!part) return;
+              let icon = "🩺";
+              switch (key) {
+                case "head":
+                  icon = "🧑‍🦱";
+                  break;
+                case "eyes":
+                  icon = "👁️";
+                  break;
+                case "mouth":
+                  icon = "👄";
+                  break;
+                case "ears":
+                  icon = "👂";
+                  break;
+                case "neck":
+                  icon = "🦴";
+                  break;
+                case "arms":
+                  icon = "💪";
+                  break;
+                case "chest":
+                  icon = "🫁";
+                  break;
+                case "abdomen":
+                  icon = "🍽️";
+                  break;
+                case "genetical":
+                  icon = "🚻";
+                  break;
+                case "legs":
+                  icon = "🦵";
+                  break;
               }
-              groupedBySubClass[sub].push({
-                ArticleTitle: article.fields["Article Title"],
-                ArticleURL: `${externalURL}?slug=${article.fields["Article URL"]}`,
+              // Drawer content
+              let html = "";
+              html += `<h3>${part.name}</h3>`;
+              html += `<p>${part.description}</p>`;
+              if (part.articles && part.articles.length) {
+                html += `<h4>Related Articles</h4><ul>`;
+                part.articles.forEach((a) => {
+                  html += `<li><a href="${a.ArticleURL}" target="_blank">${a.ArticleTitle}</a></li>`;
+                });
+                html += `</ul>`;
+              }
+              document.getElementById("drawerContent").innerHTML = html;
+              document.getElementById("drawerOverlay").style.display = "block";
+              document.getElementById("drawer").classList.add("open");
+            }
+
+            function closeDrawer() {
+              document.getElementById("drawer").classList.remove("open");
+              document.getElementById("drawerOverlay").style.display = "none";
+              // Unselect all areas (still needs jQuery/Mapster)
+              if (window.jQuery) {
+                [
+                  "head",
+                  "eyes",
+                  "mouth",
+                  "ears",
+                  "neck",
+                  "arms",
+                  "chest",
+                  "abdomen",
+                  "genetical",
+                  "legs",
+                ].forEach((part) => {
+                  window.jQuery("img").mapster("set", false, part);
+                });
+              }
+            }
+
+            document.getElementById("drawerClose").onclick = closeDrawer;
+            document.getElementById("drawerOverlay").onclick = closeDrawer;
+
+            // Attach click handlers to all <area> elements
+            const areas = document.querySelectorAll('map[name="kid-map"] area');
+            areas.forEach((area) => {
+              area.addEventListener("click", function (e) {
+                e.preventDefault();
+                const key = area.getAttribute("data-key");
+                openDrawer(key);
               });
             });
-          }
+          })();
+        }
+      );
+    } else {
+      setTimeout(initImageMapster, 100); // Retry after 100ms
+    }
+  }
 
-          const bodyPartDetails = {
-            head: {
-              name: "Head",
-              description:
-                "Common symptoms: headache, dizziness, scalp issues.",
-              articles: groupedBySubClass?.["head-or-brain"],
-            },
-            eyes: {
-              name: "Eyes",
-              description: "Common symptoms: redness, itching, vision changes.",
-              articles: groupedBySubClass?.["eye"],
-            },
-            mouth: {
-              name: "Mouth",
-              description:
-                "Common symptoms: mouth sores, tooth pain, dry mouth.",
-              articles: groupedBySubClass?.["mouth-or-teeth"],
-            },
-            ears: {
-              name: "Ears",
-              description: "Common symptoms: earache, hearing loss, discharge.",
-              articles: groupedBySubClass?.["ear"],
-            },
-            neck: {
-              name: "Neck or Back",
-              description: "Common symptoms: stiffness, pain, swelling.",
-              articles: groupedBySubClass?.["neck-or-back"],
-            },
-            arms: {
-              name: "Arms",
-              description: "Common symptoms: rashes, pain, swelling.",
-              articles: groupedBySubClass?.["arm-or-hand"],
-            },
-            chest: {
-              name: "Chest",
-              description:
-                "Common symptoms: chest pain, cough, breathing issues.",
-              articles: groupedBySubClass?.["chest"],
-            },
-            abdomen: {
-              name: "Abdomen",
-              description: "Common symptoms: stomach ache, nausea, bloating.",
-              articles: groupedBySubClass?.["abdomen"],
-            },
-            genetical: {
-              name: "Genital Area or Urinary",
-              description: "Common symptoms: pain, itching, urinary issues.",
-              articles: groupedBySubClass?.["genitals-or-urinary"],
-            },
-            legs: {
-              name: "Legs",
-              description: "Common symptoms: pain, swelling, limping.",
-              articles: groupedBySubClass?.["leg-or-foot"],
-            },
-          };
-
-          function openDrawer(key) {
-            const part = bodyPartDetails[key];
-            if (!part) return;
-            $("#drawerTitle").text(part.name);
-            let icon = "🩺";
-            switch (key) {
-              case "head":
-                icon = "🧑‍🦱";
-                break;
-              case "eyes":
-                icon = "👁️";
-                break;
-              case "mouth":
-                icon = "👄";
-                break;
-              case "ears":
-                icon = "👂";
-                break;
-              case "neck":
-                icon = "🦴";
-                break;
-              case "arms":
-                icon = "💪";
-                break;
-              case "chest":
-                icon = "🫁";
-                break;
-              case "abdomen":
-                icon = "🍽️";
-                break;
-              case "genetical":
-                icon = "🚻";
-                break;
-              case "legs":
-                icon = "🦵";
-                break;
-            }
-            $("#drawerIcon").text(icon);
-
-            let html = "";
-            html += `<h3>${part.name}</h3>`;
-            html += `<p>${part.description}</p>`;
-            if (part.articles && part.articles.length) {
-              html += `<h4>Related Articles</h4><ul>`;
-              part.articles.forEach((a) => {
-                html += `<li><a href="${a.ArticleURL}" target="_blank">${a.ArticleTitle}</a></li>`;
-              });
-              html += `</ul>`;
-            }
-            $("#drawerContent").html(html);
-            $("#drawerOverlay").show();
-            $("#drawer").addClass("open");
-          }
-
-          function closeDrawer() {
-            $("#drawer").removeClass("open");
-            $("#drawerOverlay").hide();
-            $("img").mapster("set", false, "head");
-            $("img").mapster("set", false, "eyes");
-            $("img").mapster("set", false, "mouth");
-            $("img").mapster("set", false, "ears");
-            $("img").mapster("set", false, "neck");
-            $("img").mapster("set", false, "arms");
-            $("img").mapster("set", false, "chest");
-            $("img").mapster("set", false, "abdomen");
-            $("img").mapster("set", false, "genetical");
-            $("img").mapster("set", false, "legs");
-          }
-
-          $("#drawerClose, #drawerOverlay").on("click", closeDrawer);
-
-          $('map[name="kid-map"] area').on("click", function (e) {
-            e.preventDefault();
-            const key = $(this).data("key");
-            openDrawer(key);
-          });
-
-          // Listen for browser navigation (back/forward)
-        });
-      }
+  if (!isjQueryLoaded()) {
+    console.error(
+      "jQuery is not loaded. Please ensure jQuery is included before this script."
     );
+    // loadScript("https://code.jquery.com/jquery-3.6.0.min.js", initImageMapster);
   }
-
-  if (isjQueryLoaded()) {
-    initImageMapster();
-  } else {
-    loadScript("https://code.jquery.com/jquery-3.6.0.min.js", initImageMapster);
-  }
+  initImageMapster();
 })();
