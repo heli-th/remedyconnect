@@ -1,11 +1,12 @@
-// const SERVER_URL = "http://localhost:3000/";
-const SERVER_URL = "https://externalcontent.remedyconnect.com/";
+const SERVER_URL = "http://localhost:3000/";
+// const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".kids-site-video-widget");
   const loader = document.getElementById("loader-container");
   const key = container.getAttribute("data-key");
   const externalURL = container.getAttribute("data-detailPage-url");
+  const videoPerPage = container.getAttribute("data-video-per-page") || 12;
 
   if (!container || !loader) {
     return console.error("Wrong code snippet: container or loader not found.");
@@ -92,11 +93,21 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
   async function loadWidgetContent() {
     container.innerHTML = "";
 
+    let pageNumber = 1;
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("page")) pageNumber = parseInt(params.get("page"), 10) || 1;
+
     let allVideos = [];
+    let page, pageSize, totalPages, totalRecords;
     try {
-      let detailUrl = `${SERVER_URL}api/kids-site-video`;
+      let detailUrl = `${SERVER_URL}api/kids-site-video?page=${pageNumber}&pageSize=${videoPerPage}`;
       const res = await fetch(detailUrl);
-      allVideos = await res.json();
+      let responseData = await res.json();
+      page = responseData.page || 1;
+      pageSize = responseData.pageSize || 12;
+      totalPages = responseData.totalPages || 1;
+      totalRecords = responseData.totalRecords || 0;
+      allVideos = responseData.records || [];
       loader.classList.add("hide");
       setTimeout(() => {
         loader.style.display = "none";
@@ -111,41 +122,19 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
       return;
     }
 
-    allVideos.forEach(async (video) => {
+    // Render video items
+    allVideos.forEach((video) => {
       const videoElement = document.createElement("div");
       videoElement.classList.add("video-item");
 
-      articleHtml = video.fields["Article HTML"];
+      let articleHtml = video.fields["Article HTML"];
       let thumbnailWrapper = document.createElement("div");
       thumbnailWrapper.classList.add("video-thumbnail");
 
-      const match = articleHtml.match(/src=['"]([^'"]+)['"]/);
-      if (match && match[1]) {
-        const vimeoIdMatch = match[1].match(/vimeo\.com\/(?:video\/)?(\d+)/);
-
-        if (vimeoIdMatch) {
-          const vimeoId = vimeoIdMatch[1];
-          try {
-            const response = await fetch(
-              `https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}`
-            );
-            const data = await response.json();
-            const thumbnailUrl =
-              data.thumbnail_url_with_play_button ||
-              data.thumbnail_url ||
-              `${SERVER_URL}static/images/default-video-thumbnail.png`; // Set your default image path here
-
-            const img = document.createElement("img");
-            img.src = thumbnailUrl;
-            img.alt = video.fields["Article Name"] || "Video thumbnail";
-            thumbnailWrapper.appendChild(img);
-          } catch (e) {
-            console.error("Failed to load Vimeo thumbnail", e);
-          }
-        } else {
-          console.warn("Invalid Vimeo URL:", vimeoUrl);
-        }
-      }
+      const img = document.createElement("img");
+      img.src = video.fields["Video Thumbnail"];
+      img.alt = video.fields["Article Name"] || "Video thumbnail";
+      thumbnailWrapper.appendChild(img);
 
       const title = document.createElement("h3");
       title.textContent = video.fields["Article Name"];
@@ -166,5 +155,47 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
 
       container.appendChild(videoElement);
     });
+
+    // Pagination
+
+    if (totalPages > 1) {
+      const pagination = document.createElement("div");
+      pagination.className = "kids-site-pagination";
+
+      // Previous button
+      const prevBtn = document.createElement("button");
+      prevBtn.textContent = "Previous";
+      prevBtn.disabled = page <= 1;
+      prevBtn.onclick = () => changePage(page - 1);
+      pagination.appendChild(prevBtn);
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement("button");
+        pageBtn.textContent = i;
+        if (i === page) pageBtn.classList.add("active");
+        pageBtn.onclick = () => changePage(i);
+        pagination.appendChild(pageBtn);
+      }
+
+      // Next button
+      const nextBtn = document.createElement("button");
+      nextBtn.textContent = "Next";
+      nextBtn.disabled = page >= totalPages;
+      nextBtn.onclick = () => changePage(page + 1);
+      pagination.appendChild(nextBtn);
+
+      container.appendChild(pagination);
+    }
+
+    // Helper to change page
+    function changePage(newPage) {
+      loader.classList.remove("hide");
+      loader.style.display = "";
+      // Keep other query params if needed
+      const params = new URLSearchParams(window.location.search);
+      params.set("page", newPage);
+      window.location.search = params.toString();
+    }
   }
 })();
