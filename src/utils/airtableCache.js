@@ -1,4 +1,5 @@
 const fs = require("fs");
+const fsp = require("fs").promises;
 const path = require("path");
 
 const CACHE_DIR = path.join(__dirname, "../cache");
@@ -23,4 +24,36 @@ const readFromCache = (baseId, viewName) => {
   return null;
 };
 
-module.exports = { saveToCache, readFromCache };
+const getCacheFileKeysByBaseName = async (baseName) => {
+  const cacheDir = path.join(__dirname, "../cache");
+
+  try {
+    const files = await fsp.readdir(cacheDir);
+    return files
+      .filter((file) => file.startsWith(baseName))
+      .map((file) => path.join(cacheDir, file));
+  } catch (err) {
+    console.error("Error reading cache directory:", err);
+    return [];
+  }
+};
+
+const deleteCacheFile = (filePath) => {
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+};
+
+const deleteMultipleCacheFiles = (filePaths) => {
+  filePaths.forEach((filePath) => {
+    deleteCacheFile(filePath);
+  });
+};
+
+module.exports = {
+  saveToCache,
+  readFromCache,
+  getCacheFileKeysByBaseName,
+  deleteCacheFile,
+  deleteMultipleCacheFiles,
+};
