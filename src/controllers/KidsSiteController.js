@@ -1,7 +1,5 @@
 const axios = require("axios");
-const NodeCache = require("node-cache");
-const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
-const { getRecordByAccessKey } = require("../utils/airtableAPIs");
+const { getCache, setCache } = require("../services/cacheServices");
 
 const KidsSiteVideo = async (req, res) => {
   const { slug } = req.query;
@@ -18,7 +16,7 @@ const KidsSiteVideo = async (req, res) => {
 
   // Build cache key based on query params
   const cacheKey = `symptom-checker:${key}:${table}:${view}:${slug || ""}`;
-  const cachedData = cache.get(cacheKey);
+  const cachedData = getCache(cacheKey);
   if (cachedData) {
     res.setHeader("Content-Type", "text/json");
     return res.send(cachedData);
@@ -71,7 +69,7 @@ const KidsSiteVideo = async (req, res) => {
       </section>
     </div>`;
 
-          cache.set(cacheKey, `<body>${html}</body>`);
+          setCache(cacheKey, `<body>${html}</body>`);
 
           res.setHeader("Content-Type", "text/html");
           return res.send(`<body>${html}</body>`);
@@ -90,7 +88,7 @@ const KidsSiteVideo = async (req, res) => {
       allRecords.push(...data.records);
     }
 
-    cache.set(cacheKey, allRecords);
+    setCache(cacheKey, allRecords);
 
     res.setHeader("Content-Type", "text/json");
     res.send(allRecords);

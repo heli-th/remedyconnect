@@ -1,10 +1,9 @@
 const axios = require("axios");
-const NodeCache = require("node-cache");
-const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
+const { setCache, getCache } = require("../services/cacheServices");
 
 async function getRecordByAccessKey({ base, table, accessKey }) {
   const cacheKey = `accessKey:${base}:${table}:${accessKey}`;
-  const cachedRecord = cache.get(cacheKey);
+  const cachedRecord = getCache(cacheKey);
   if (cachedRecord) {
     return cachedRecord;
   }
@@ -21,7 +20,7 @@ async function getRecordByAccessKey({ base, table, accessKey }) {
       },
     });
     if (response.data.records && response.data.records.length > 0) {
-      cache.set(cacheKey, response.data.records[0]); // Cache the record
+      setCache(cacheKey, response.data.records[0]); // Cache the record
       return response.data.records[0];
     }
     return null;

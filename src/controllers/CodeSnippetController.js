@@ -1,9 +1,8 @@
 //https://externalcontent.remedyconnect.com base URL
 const axios = require("axios");
 require("dotenv").config();
-const NodeCache = require("node-cache");
-const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
 const { getRecordByAccessKey } = require("../utils/airtableAPIs");
+const { getCache, setCache } = require("../services/cacheServices");
 
 /* Render Airtable Widget */
 const Widget = async (req, res) => {
@@ -300,7 +299,7 @@ const Widget = async (req, res) => {
   const cacheKey = `widget:${isclientbase}:${key}:${table}:${view}:${displayType}:${
     req.query.page || 1
   }:${req.query.pageSize || 40}:${req.query.search || ""}`;
-  const cachedHtml = cache.get(cacheKey);
+  const cachedHtml = getCache(cacheKey);
   if (cachedHtml) {
     res.setHeader("Content-Type", "text/html");
     return res.send(`<body>${cachedHtml}</body>`);
@@ -447,7 +446,7 @@ const Widget = async (req, res) => {
             `;
     }
 
-    cache.set(cacheKey, htmlContent); // Cache the HTML content
+    setCache(cacheKey, htmlContent); // Cache the HTML content
 
     res.setHeader("Content-Type", "text/html");
     res.send(`<body>${htmlContent}</body>`);
