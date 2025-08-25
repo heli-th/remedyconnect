@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const articleRoutes = require("./articleRoutes");
+const airtableRoutes = require("./airtableRoutes");
 const locationRoutes = require("./locationRoutes");
 const codeRoutes = require("./codeRoutes");
 const symptomCheckerRoutes = require("./symptomCheckerRoute");
@@ -9,6 +10,8 @@ const cacheRoutes = require("./cacheRoutes");
 
 // Article routes
 router.use("/articles", articleRoutes);
+
+router.use("/", airtableRoutes);
 
 // Location routes
 router.use("/location", locationRoutes);
