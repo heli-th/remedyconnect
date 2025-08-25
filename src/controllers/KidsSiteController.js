@@ -15,7 +15,9 @@ const KidsSiteVideo = async (req, res) => {
   }
 
   // Build cache key based on query params
-  const cacheKey = `symptom-checker:${key}:${table}:${view}:${slug || ""}`;
+  const cacheKey = `symptom-checker:${key}:${table}:${view}:${slug || ""}:${
+    req.query.page || 1
+  }:${req.query.pageSize || 12}`;
   const cachedData = getCache(cacheKey);
   if (cachedData) {
     res.setHeader("Content-Type", "text/json");
@@ -60,7 +62,10 @@ const KidsSiteVideo = async (req, res) => {
       <h3>${safe(record["Article Name"])}</h3>
           <div class="video-wrapper">
            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
-             ${safe(record["Article HTML"])}
+           <iframe src="${safe(
+             record["Media Link"]
+           )}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+             
         </div>
         </div>
       </section>
@@ -80,18 +85,92 @@ const KidsSiteVideo = async (req, res) => {
         return res.status(500).send("Failed to load article detail.");
       }
     }
-    const response = await axios.get(urlBase, {
-      headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` },
-    });
-    const data = response.data;
-    if (data.records && data.records.length > 0) {
-      allRecords.push(...data.records);
-    }
 
-    setCache(cacheKey, allRecords);
+    // Parse pagination parameters from query, with defaults
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 12;
+    const offset = (page - 1) * pageSize;
 
-    res.setHeader("Content-Type", "text/json");
-    res.send(allRecords);
+    // Fetch all records from Airtable (could be improved for large datasets)
+    let records = [];
+    let offsetToken = undefined;
+    do {
+      const params = {
+        pageSize: 100,
+        ...(offsetToken && { offset: offsetToken }),
+      };
+      const response = await axios.get(urlBase, {
+        headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` },
+        params,
+      });
+      const data = response.data;
+      if (data.records && data.records.length > 0) {
+        records.push(...data.records);
+      }
+      offsetToken = data.offset;
+    } while (offsetToken);
+
+    // Map records to desired format (with Vimeo thumbnail)
+    const mappedRecords = await Promise.all(
+      records.map(async (record) => {
+        const fields = record.fields;
+        const mediaLink = fields["Media Link"] || "";
+        let thumbnailUrl = "";
+
+        const vimeoIdMatch = mediaLink.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+
+        if (vimeoIdMatch) {
+          const vimeoId = vimeoIdMatch[1];
+          try {
+            const response = await axios.get(
+              `https://vimeo.com/api/oembed.json?url=https://vimeo.com/${vimeoId}`
+            );
+            const vimeoData = response.data;
+            thumbnailUrl =
+              vimeoData.thumbnail_url_with_play_button ||
+              vimeoData.thumbnail_url ||
+              `${process.env.NODE_SERVER_URL}/static/images/default-video-thumbnail.png`;
+          } catch (e) {
+            console.error("Failed to load Vimeo thumbnail", e);
+          }
+        } else {
+          // fallback or log
+        }
+
+        return {
+          id: record.id,
+          fields: {
+            "Article Name": fields["Article Name"] || "",
+            "Article Summary": fields["Article Summary"] || "",
+            "Article URL": fields["Article URL"] || "",
+            "Article HTML": fields["Article HTML"] || "",
+            "Video Thumbnail":
+              thumbnailUrl ||
+              `${process.env.NODE_SERVER_URL}/static/images/default-video-thumbnail.png`,
+          },
+        };
+      })
+    );
+
+    // Paginate results
+    const paginatedRecords = mappedRecords.slice(offset, offset + pageSize);
+
+    // Prepare pagination metadata
+    const totalRecords = mappedRecords.length;
+    const totalPages = Math.ceil(totalRecords / pageSize);
+
+    const responsePayload = {
+      page,
+      pageSize,
+      totalRecords,
+      totalPages,
+      records: paginatedRecords,
+    };
+
+   setCache(cacheKey, responsePayload);
+
+    res.setHeader("Content-Type", "application/json");
+    res.send(responsePayload);
   } catch (err) {
     res.status(500).send("Failed to load widget.");
   }
