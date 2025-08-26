@@ -1,8 +1,9 @@
-const SERVER_URL = "http://localhost:3000/";
-// const SERVER_URL = "https://externalcontent.remedyconnect.com/";
+// const SERVER_URL = "http://localhost:3000/";
+const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".kids-site-video-widget");
+  
   const loader = document.getElementById("loader-container");
   const key = container.getAttribute("data-key");
   const externalURL = container.getAttribute("data-detailPage-url");
