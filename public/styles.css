@@ -116,7 +116,7 @@ a.widget-link:focus {
     color: #4a5568;
 }
 
-.dropdown {
+.remedy-dropdown {
     width: 100%;
     padding: 10px 14px;
     border-radius: 8px;
@@ -128,7 +128,7 @@ a.widget-link:focus {
     transition: border-color 0.2s;
 }
 
-.dropdown:focus {
+.remedy-dropdown:focus {
     border-color: #3182ce;
     outline: none;
 }

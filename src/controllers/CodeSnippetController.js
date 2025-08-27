@@ -400,7 +400,7 @@ const Widget = async (req, res) => {
       htmlContent = `
                 <div class="container">
                     <div class="dropdown-wrapper">
-                        <select class="dropdown">
+                        <select class="remedy-dropdown">
                             <option selected disabled>Select an article</option>
                             ${filteredRecords
                               .map((record) => {
