@@ -1,5 +1,6 @@
 const axios = require("axios");
 const { saveToCache, readFromCache } = require("../utils/airtableCache");
+const { getCache, setCache } = require("./cacheServices");
 require("dotenv").config();
 const TOKEN = process.env.AIRTABLE_TOKEN;
 const MAX_FETCHES = 1000;
@@ -11,6 +12,13 @@ async function fetchAirtableView(baseId, tableName, viewName) {
   const ARTICLE_PATH = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(
     tableName
   )}?view=${encodedView}`;
+
+  // Build cache key based on query params
+  const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}`;
+  const cachedData = getCache(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
 
   let offset = "";
   let articles = [];
@@ -46,6 +54,9 @@ async function fetchAirtableView(baseId, tableName, viewName) {
     }
   }
 
+  /**set Node cache */
+  setCache(cacheKey, articles);
+  /**set json cache */
   saveToCache(baseId, viewName, articles);
   return articles;
 }
