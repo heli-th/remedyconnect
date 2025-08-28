@@ -294,7 +294,7 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
                     container.innerHTML = html;
 
                     // Add change handler to dropdown
-                    const select = container.querySelector('.dropdown');
+                    const select = container.querySelector('.remedy-dropdown');
                     if (select && detailPageBaseUrl) {
                         select.addEventListener('change', function () {
                             const slug = this.value;
