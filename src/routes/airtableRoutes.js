@@ -1,7 +1,8 @@
 const express = require("express");
-const { getCollectionData } = require("../controllers/AirtableController");
+const { getCollectionData, getClientAccount } = require("../controllers/AirtableController");
 
 const router = express.Router();
 router.get("/getCollectionData", getCollectionData);
+router.get("/getClientAccount", getClientAccount);
 
 module.exports = router;

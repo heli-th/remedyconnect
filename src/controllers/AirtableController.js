@@ -1,4 +1,7 @@
-const { fetchAirtableView } = require("../services/AirtableService");
+const {
+  fetchAirtableView,
+  fetchClientAccount,
+} = require("../services/AirtableService");
 const RESTRESPONSE = require("../utils/RESTRESPONSE");
 
 const getCollectionData = async (req, res) => {
@@ -21,6 +24,20 @@ const getCollectionData = async (req, res) => {
   }
 };
 
+const getClientAccount = async (req, res) => {
+  const { base } = req.query;
+
+  if (!base)
+    return res.status(400).send(RESTRESPONSE(false, "base is required"));
+  try {
+    const data = await fetchClientAccount(base);
+    res.send(RESTRESPONSE(true, "Data fetched", { data }));
+  } catch (err) {
+    res.status(500).send(RESTRESPONSE(false, err.message));
+  }
+};
+
 module.exports = {
   getCollectionData,
+  getClientAccount,
 };
