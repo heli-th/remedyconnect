@@ -81,4 +81,42 @@ const isBaseThrottle = async (baseId) => {
   }
 };
 
-module.exports = { fetchAirtableView, isBaseThrottle };
+const fetchClientAccount = async (base) => {
+  const CLIENT_ACCOUNT = `https://api.airtable.com/v0/${base}/Client%20Account`;
+  const viewName = "client_account";
+  let data;
+  // Build cache key based on query params
+  const cacheKey = `ClientAccount:${base}`;
+  const cachedData = getCache(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
+  try {
+    const response = await axios.get(CLIENT_ACCOUNT, {
+      headers: {
+        Authorization: "Bearer " + TOKEN,
+        "Content-Type": "application/json",
+      },
+    });
+
+    data = response.data;
+  } catch (error) {
+    if (error.response?.status === 429) {
+      console.warn(`Status code 429 hit for ${base}. Using cache.`);
+      const cached = readFromCache(base, viewName);
+      if (cached) return cached;
+      throw new Error("Rate limit hit and no cache available.");
+    }
+
+    throw new Error(`Failed to fetch: ${error.message}`);
+  }
+
+  /**set Node cache */
+  setCache(cacheKey, data);
+  /**set json cache */
+  saveToCache(base, viewName, data);
+  return data.records;
+};
+
+module.exports = { fetchAirtableView, isBaseThrottle, fetchClientAccount };
