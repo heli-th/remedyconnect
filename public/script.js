@@ -300,7 +300,7 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
                             const slug = this.value;
                             if (slug && slug !== "" && slug !== "Select an article") {
                                 // Redirect to detail page with ?slug=...
-                                window.top.location.href = detailPageBaseUrl.replace(/[\?&]$/, '') + '?slug=' + encodeURIComponent(slug);
+                                window.location.href = detailPageBaseUrl.replace(/[\?&]$/, '') + '?slug=' + encodeURIComponent(slug);
                             }
                         });
                     }
