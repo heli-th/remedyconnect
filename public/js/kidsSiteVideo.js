@@ -3,11 +3,13 @@ const SERVER_URL = "https://externalcontent.remedyconnect.com/";
 
 (async () => {
   const container = document.querySelector(".kids-site-video-widget");
-  
+
   const loader = document.getElementById("loader-container");
   const key = container.getAttribute("data-key");
   const externalURL = container.getAttribute("data-detailPage-url");
   const videoPerPage = container.getAttribute("data-video-per-page") || 12;
+  const language = container.getAttribute("data-attr-language") || "all";
+  const subCategory = container.getAttribute("data-attr-sub-category") || "all";
 
   if (!container || !loader) {
     return console.error("Wrong code snippet: container or loader not found.");
@@ -101,7 +103,9 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
     let allVideos = [];
     let page, pageSize, totalPages, totalRecords;
     try {
-      let detailUrl = `${SERVER_URL}api/kids-site-video?page=${pageNumber}&pageSize=${videoPerPage}`;
+      let detailUrl = `${SERVER_URL}api/kids-site-video?page=${pageNumber}&pageSize=${videoPerPage}&language=${encodeURIComponent(
+        language
+      )}&subCategory=${encodeURIComponent(subCategory)}`;
       const res = await fetch(detailUrl);
       let responseData = await res.json();
       page = responseData.page || 1;
