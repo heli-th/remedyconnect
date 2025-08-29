@@ -2,7 +2,7 @@ const axios = require("axios");
 const { getCache, setCache } = require("../services/cacheServices");
 
 const KidsSiteVideo = async (req, res) => {
-  const { slug } = req.query;
+  const { slug, language, subCategory } = req.query;
   const key = "appodPMCS4YQxZWGl";
   const table = "Master Articles";
   const view = "Kid Site Videos";
@@ -17,7 +17,7 @@ const KidsSiteVideo = async (req, res) => {
   // Build cache key based on query params
   const cacheKey = `symptom-checker:${key}:${table}:${view}:${slug || ""}:${
     req.query.page || 1
-  }:${req.query.pageSize || 12}`;
+  }:${req.query.pageSize || 12}:${language || "all"}:${subCategory || "all"}`;
   const cachedData = getCache(cacheKey);
   if (cachedData) {
     res.setHeader("Content-Type", "text/json");
@@ -91,6 +91,22 @@ const KidsSiteVideo = async (req, res) => {
     const pageSize = parseInt(req.query.pageSize) || 12;
     const offset = (page - 1) * pageSize;
 
+    let conditions = [];
+
+    if (language && language.toLowerCase() !== "all") {
+      conditions.push(`{Language} = '${language}'`);
+    }
+
+    if (subCategory && subCategory.toLowerCase() !== "all") {
+      const safeSubCategory = subCategory.replace(/'/g, "\\'");
+      conditions.push(`{Sub Category} = '${safeSubCategory}'`);
+    }
+
+    let filterByFormula = "";
+    if (conditions.length > 0) {
+      filterByFormula = `AND(${conditions.join(", ")})`;
+    }
+
     // Fetch all records from Airtable (could be improved for large datasets)
     let records = [];
     let offsetToken = undefined;
@@ -99,6 +115,9 @@ const KidsSiteVideo = async (req, res) => {
         pageSize: 100,
         ...(offsetToken && { offset: offsetToken }),
       };
+      if (filterByFormula) {
+        params.filterByFormula = filterByFormula;
+      }
       const response = await axios.get(urlBase, {
         headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` },
         params,
@@ -167,7 +186,7 @@ const KidsSiteVideo = async (req, res) => {
       records: paginatedRecords,
     };
 
-   setCache(cacheKey, responsePayload);
+    setCache(cacheKey, responsePayload);
 
     res.setHeader("Content-Type", "application/json");
     res.send(responsePayload);
