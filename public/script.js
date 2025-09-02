@@ -246,7 +246,7 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
 
             let serverUrl = window.NODE_SERVER_URL || "https://externalcontent.remedyconnect.com/"; // Replace with your server URL
             let url = `${serverUrl}/api/code/code-widget?isclientbase=${encodeURIComponent(isclientbase)}&key=${encodeURIComponent(key)}&table=${encodeURIComponent(table)}&view=${encodeURIComponent(view)}&displayType=${encodeURIComponent(displayType)}`;
-
+            // TEST Vickie
             // Helper: get slug from URL
             function getSlugFromUrl() {
                 const params = new URLSearchParams(window.location.search);
