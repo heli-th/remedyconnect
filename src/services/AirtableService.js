@@ -172,9 +172,22 @@ const fetchUnReviewedArticles = async (baseId) => {
   return articles;
 };
 
+const getAllowedDomains = async (baseId) => {
+  const clientAccount = await fetchClientAccount(baseId);
+  if (clientAccount && clientAccount.length > 0) {
+    const domainsField = clientAccount[0].fields["Allowed Domains"];
+    if (domainsField) {
+      return domainsField.split(",").map((domain) => domain.trim());
+    } else {
+      return [];
+    }
+  }
+};
+
 module.exports = {
   fetchAirtableView,
   isBaseThrottle,
   fetchClientAccount,
   fetchUnReviewedArticles,
+  getAllowedDomains,
 };
