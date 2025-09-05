@@ -10,6 +10,6 @@ const router = express.Router();
 router.get("/getCollectionData", getCollectionData);
 router.get("/getClientAccount", getClientAccount);
 router.get("/getUnReviewedArticles", getUnReviewedArticles);
-router.get("/createCollectionData", postCollectionData);
+router.post("/createCollectionData", postCollectionData);
 
 module.exports = router;
