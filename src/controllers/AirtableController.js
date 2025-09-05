@@ -55,7 +55,7 @@ const getUnReviewedArticles = async (req, res) => {
   }
 };
 
-const postArticles = async (req, res) => {
+const postCollectionData = async (req, res) => {
   const { base, tableName, records, viewName } = req.body;
 
   if (!base)
@@ -84,5 +84,5 @@ module.exports = {
   getCollectionData,
   getClientAccount,
   getUnReviewedArticles,
-  postArticles,
+  postCollectionData,
 };

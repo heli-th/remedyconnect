@@ -3,11 +3,13 @@ const {
   getCollectionData,
   getClientAccount,
   getUnReviewedArticles,
+  postCollectionData,
 } = require("../controllers/AirtableController");
 
 const router = express.Router();
 router.get("/getCollectionData", getCollectionData);
 router.get("/getClientAccount", getClientAccount);
 router.get("/getUnReviewedArticles", getUnReviewedArticles);
+router.get("/createCollectionData", postCollectionData);
 
 module.exports = router;
