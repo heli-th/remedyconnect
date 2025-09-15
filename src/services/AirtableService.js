@@ -7,7 +7,7 @@ const MAX_FETCHES = 1000;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchAirtableView(baseId, tableName, viewName) {
+async function fetchAirtableView(baseId, tableName, viewName, useCache = true) {
   const encodedView = encodeURIComponent(viewName);
   const ARTICLE_PATH = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(
     tableName
@@ -15,11 +15,12 @@ async function fetchAirtableView(baseId, tableName, viewName) {
 
   // Build cache key based on query params
   const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}`;
-  const cachedData = getCache(cacheKey);
-  if (cachedData) {
-    return cachedData;
+  if (useCache) {
+    const cachedData = getCache(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
   }
-
   let offset = "";
   let articles = [];
   let fetches = 0;
@@ -184,10 +185,52 @@ const getAllowedDomains = async (baseId) => {
   }
 };
 
+const createAirtableRecords = async (baseId, tableName, viewName, records) => {
+  const encodedView = encodeURIComponent(viewName);
+  const PATH = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(
+    tableName
+  )}?view=${encodedView}`;
+
+  const MAX_BATCH_SIZE = 10; // Adjust batch size as needed
+  const batches = [];
+  const addedArticles = [];
+
+  /**Create batches */
+  for (let i = 0; i < records.length; i += MAX_BATCH_SIZE) {
+    batches.push(records.slice(i, i + MAX_BATCH_SIZE));
+  }
+
+  for (const batch of batches) {
+    try {
+      const response = await axios.post(
+        PATH,
+        { records: batch },
+        {
+          headers: {
+            Authorization: "Bearer " + TOKEN,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error(`Error adding articles: ${response.statusText}`);
+      }
+
+      addedArticles.push(...response.data.records);
+    } catch (error) {
+      throw new Error(`Error adding articles: ${error.message}`);
+    }
+  }
+  return addedArticles;
+};
+
 module.exports = {
   fetchAirtableView,
   isBaseThrottle,
   fetchClientAccount,
   fetchUnReviewedArticles,
   getAllowedDomains,
+  createAirtableRecords,
 };
