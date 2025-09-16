@@ -84,7 +84,7 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
 
       return;
     } catch (err) {
-      container.innerHTML = "Failed to load content.";
+      container.innerHTML = "Failed to load content." + err.message;
     } finally {
       loader.classList.add("hide");
       setTimeout(() => {
@@ -107,6 +107,14 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
         language
       )}&subCategory=${encodeURIComponent(subCategory)}`;
       const res = await fetch(detailUrl);
+      if (!res.ok) {
+        container.innerHTML = "Failed to fetch data:" + res.statusText;
+        loader.classList.add("hide");
+        setTimeout(() => {
+          loader.style.display = "none";
+        }, 400);
+        return;
+      }
       let responseData = await res.json();
       page = responseData.page || 1;
       pageSize = responseData.pageSize || 12;

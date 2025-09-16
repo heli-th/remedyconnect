@@ -1,17 +1,41 @@
 const axios = require("axios");
 const { getCache, setCache } = require("../services/cacheServices");
+const { getGlobalBaseAllowedDomains } = require("../services/AirtableService");
 
 const KidsSiteVideo = async (req, res) => {
   const { slug, language, subCategory } = req.query;
+  const origin = req.headers.origin;
   const key = "appodPMCS4YQxZWGl";
   const table = "Master Articles";
   const view = "Kid Site Videos";
   let base = key;
+  let hostname;
+
+  try {
+    hostname = new URL(origin).hostname;
+  } catch {
+    hostname = origin;
+  }
 
   if (!key) {
     return res
       .status(400)
       .send("Missing required parameter: key for client base");
+  }
+
+  const allowedDomains = await getGlobalBaseAllowedDomains();
+  // Normalize origin check
+  if (
+    !origin ||
+    origin === "null" ||
+    !allowedDomains?.some(
+      (domain) =>
+        domain.includes("://")
+          ? domain === origin // if stored with protocol, match full origin
+          : domain === hostname // if stored without protocol, match hostname
+    )
+  ) {
+    return res.status(403).json({ message: "CORS Error: Origin not allowed" });
   }
 
   // Build cache key based on query params
