@@ -3,9 +3,14 @@ const axios = require("axios");
 require("dotenv").config();
 const { getRecordByAccessKey } = require("../utils/airtableAPIs");
 const { getCache, setCache } = require("../services/cacheServices");
+const {
+  getAllowedDomains,
+  getGlobalBaseAllowedDomains,
+} = require("../services/AirtableService");
 
 /* Render Airtable Widget */
 const Widget = async (req, res) => {
+  const origin = req.headers.origin;
   const {
     isclientbase,
     key,
@@ -21,6 +26,13 @@ const Widget = async (req, res) => {
     return res
       .status(400)
       .send("Missing required parameters: base, table, or view");
+  }
+  let hostname;
+
+  try {
+    hostname = new URL(origin).hostname;
+  } catch {
+    hostname = origin;
   }
 
   // Determine if the request is for a client base or not
@@ -38,11 +50,44 @@ const Widget = async (req, res) => {
     });
     if (record && typeof record === "object" && !Array.isArray(record)) {
       base = record.fields["AirTable Id"];
+      const allowedDomains = await getAllowedDomains(base);
+      // Normalize origin check
+      if (
+        !origin ||
+        origin === "null" ||
+        !allowedDomains?.some(
+          (domain) =>
+            domain.includes("://")
+              ? domain === origin // if stored with protocol, match full origin
+              : domain === hostname // if stored without protocol, match hostname
+        )
+      ) {
+        return res
+          .status(403)
+          .json({ message: "CORS Error: Origin not allowed" });
+      }
       displayInList = record.fields["Display Fields In List"] || []; // Title, Summary, etc.
       // Display Fields In Grid can be different from List, so we keep both
       displayInGrid = record.fields["Display Fields In Grid"] || []; //Title, Summary, etc.
     } else {
       console.log("Invalid Access Key");
+    }
+  } else {
+    const allowedDomains = await getGlobalBaseAllowedDomains();
+    // Normalize origin check
+    if (
+      !origin ||
+      origin === "null" ||
+      !allowedDomains?.some(
+        (domain) =>
+          domain.includes("://")
+            ? domain === origin // if stored with protocol, match full origin
+            : domain === hostname // if stored without protocol, match hostname
+      )
+    ) {
+      return res
+        .status(403)
+        .json({ message: "CORS Error: Origin not allowed" });
     }
   }
 

@@ -268,6 +268,17 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
             try {
               let detailUrl = `${SERVER_URL}api/symptom-checker?key=${key}`;
               const res = await fetch(detailUrl);
+
+              if (!res.ok) {
+                container.innerHTML =
+                  "Failed to load content." + res.statusText;
+                loader.classList.add("hide");
+                setTimeout(() => {
+                  loader.style.display = "none";
+                }, 400);
+                return;
+              }
+
               allArticles = await res.json();
               loader.classList.add("hide");
               setTimeout(() => {
@@ -276,6 +287,7 @@ Replace "YOUR-DETAIL-PAGE-URL" with the actual path to your detail page.</pre>`;
             } catch (err) {
               console.error("Failed to fetch articles:", err);
               allArticles = [];
+              container.innerHTML = "Failed to load content." + err.message;
             }
 
             const groupedBySubClass = {};

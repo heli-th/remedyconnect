@@ -174,9 +174,21 @@ const fetchUnReviewedArticles = async (baseId) => {
 };
 
 const getAllowedDomains = async (baseId) => {
-  const clientAccount = await fetchClientAccount(baseId);
+  const clientAccount = await fetchClientAccessAccount(baseId);
   if (clientAccount && clientAccount.length > 0) {
     const domainsField = clientAccount[0].fields["Allowed Domains"];
+    if (domainsField) {
+      return domainsField.split(",").map((domain) => domain.trim());
+    } else {
+      return [];
+    }
+  }
+};
+
+const getGlobalBaseAllowedDomains = async () => {
+  const GlobalAccount = await fetchGlobalBaseAllowedDomains();
+  if (GlobalAccount && GlobalAccount.length > 0) {
+    const domainsField = GlobalAccount[0].fields["Allowed Domains"];
     if (domainsField) {
       return domainsField.split(",").map((domain) => domain.trim());
     } else {
@@ -226,6 +238,87 @@ const createAirtableRecords = async (baseId, tableName, viewName, records) => {
   return addedArticles;
 };
 
+const fetchClientAccessAccount = async (base) => {
+  const Global_BASE_ID = process.env.BASE_AIRTABLE_ID;
+  const CLIENT_ACCOUNT = `https://api.airtable.com/v0/${Global_BASE_ID}/${encodeURIComponent(
+    "Client Access"
+  )}`;
+
+  let filterByFormula = `{AirTable Id} = '${base}'`;
+
+  // Build cache key based on query params
+  const cacheKey = `clintAccess:${base}`;
+  const cachedData = getCache(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
+  let data;
+  try {
+    const response = await axios.get(CLIENT_ACCOUNT, {
+      headers: {
+        Authorization: "Bearer " + TOKEN,
+        "Content-Type": "application/json",
+      },
+      params: { filterByFormula },
+    });
+    data = response.data;
+  } catch (error) {
+    if (error.response?.status === 429) {
+      console.warn(`Status code 429 hit for ${base}. Using cache.`);
+      const cached = readFromCache(base, "allowedDomains");
+      if (cached) return cached;
+      throw new Error("Rate limit hit and no cache available.");
+    }
+    throw new Error(`Failed to fetch: ${error.message}`);
+  }
+
+  /**set Node cache */
+  setCache(cacheKey, data.records);
+  /**set json cache */
+  saveToCache(base, "allowedDomains", data);
+  return data.records;
+};
+
+const fetchGlobalBaseAllowedDomains = async () => {
+  const Global_BASE_ID = process.env.BASE_AIRTABLE_ID;
+  const PATH = `https://api.airtable.com/v0/${Global_BASE_ID}/${encodeURIComponent(
+    "Global base allowed domains"
+  )}`;
+
+  // Build cache key based on query params
+  const cacheKey = `allowedDomains:${Global_BASE_ID}`;
+  const cachedData = getCache(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
+  let data;
+  try {
+    const response = await axios.get(PATH, {
+      headers: {
+        Authorization: "Bearer " + TOKEN,
+        "Content-Type": "application/json",
+      },
+    });
+    data = response.data;
+  } catch (error) {
+    if (error.response?.status === 429) {
+      console.warn(`Status code 429 hit for ${base}. Using cache.`);
+      const cached = readFromCache(base, "allowedDomains");
+      if (cached) return cached;
+      throw new Error("Rate limit hit and no cache available.");
+    }
+    throw new Error(`Failed to fetch: ${error.message}`);
+  }
+
+  /**set Node cache */
+  setCache(cacheKey, data.records);
+  /**set json cache */
+  saveToCache(Global_BASE_ID, "allowedDomains", data);
+  return data.records;
+};
+
 module.exports = {
   fetchAirtableView,
   isBaseThrottle,
@@ -233,4 +326,6 @@ module.exports = {
   fetchUnReviewedArticles,
   getAllowedDomains,
   createAirtableRecords,
+  fetchClientAccessAccount,
+  getGlobalBaseAllowedDomains,
 };

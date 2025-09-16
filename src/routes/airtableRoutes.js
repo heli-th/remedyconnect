@@ -5,11 +5,14 @@ const {
   getUnReviewedArticles,
   postCollectionData,
 } = require("../controllers/AirtableController");
+const {
+  checkAllowedOrigin,
+} = require("../middlewares/allowedOriginMiddleware");
 
 const router = express.Router();
-router.get("/getCollectionData", getCollectionData);
-router.get("/getClientAccount", getClientAccount);
-router.get("/getUnReviewedArticles", getUnReviewedArticles);
-router.post("/createCollectionData", postCollectionData);
+router.get("/getCollectionData", checkAllowedOrigin, getCollectionData);
+router.get("/getClientAccount", checkAllowedOrigin, getClientAccount);
+router.get("/getUnReviewedArticles", checkAllowedOrigin, getUnReviewedArticles);
+router.post("/createCollectionData", checkAllowedOrigin, postCollectionData);
 
 module.exports = router;
