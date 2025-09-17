@@ -9,6 +9,17 @@ const checkAllowedOrigin = async (req, res, next) => {
   const { base: baseBody } = req.body;
   let hostname;
 
+  if (req.headers["x-airtable-source"]) {
+    return next();
+  }
+
+  if (
+    req.headers["x-postman-token"] &&
+    req.headers["x-postman-token"] === process.env.POSTMAN_SECRET
+  ) {
+    return next();
+  }
+
   if (!base && !baseId && !airtableId && !baseBody) {
     return res
       .status(400)
@@ -59,6 +70,17 @@ const checkAllowedOriginForGlobalBase = async (req, res, next) => {
   // handle CORS preflight
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
+  }
+
+  if (
+    req.headers["x-postman-token"] &&
+    req.headers["x-postman-token"] === process.env.POSTMAN_SECRET
+  ) {
+    return next();
+  }
+
+  if (req.headers["x-airtable-source"]) {
+    return next();
   }
 
   try {
