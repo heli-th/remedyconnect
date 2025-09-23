@@ -4,6 +4,7 @@ const {
   getClientAccount,
   getUnReviewedArticles,
   postCollectionData,
+  getCollectionDataWithFilters,
 } = require("../controllers/AirtableController");
 const {
   checkAllowedOrigin,
@@ -14,5 +15,11 @@ router.get("/getCollectionData", checkAllowedOrigin, getCollectionData);
 router.get("/getClientAccount", checkAllowedOrigin, getClientAccount);
 router.get("/getUnReviewedArticles", checkAllowedOrigin, getUnReviewedArticles);
 router.post("/createCollectionData", checkAllowedOrigin, postCollectionData);
+router.get(
+  "/getCollectionDataWithFilters",
+  checkAllowedOrigin,
+  getCollectionDataWithFilters
+);
 
 module.exports = router;
+       

@@ -3,6 +3,7 @@ const {
   fetchClientAccount,
   fetchUnReviewedArticles,
   createAirtableRecords,
+  fetchCollectionDataWithFilters,
 } = require("../services/AirtableService");
 const RESTRESPONSE = require("../utils/RESTRESPONSE");
 
@@ -80,9 +81,34 @@ const postCollectionData = async (req, res) => {
   }
 };
 
+const getCollectionDataWithFilters = async (req, res) => {
+  const { base, tableName, viewName, masterArticleId, updateType } = req.query;
+  const useCache = req.query.useCache !== "false";
+
+  if (!base)
+    return res.status(400).send(RESTRESPONSE(false, "base is required"));
+  if (!tableName)
+    return res.status(400).send(RESTRESPONSE(false, "tableName is required"));
+
+  try {
+    const data = await fetchCollectionDataWithFilters(
+      base,
+      tableName,
+      viewName || "Grid view",
+      masterArticleId,
+      updateType,
+      useCache
+    );
+    res.send(RESTRESPONSE(true, "Data fetched", { data }));
+  } catch (err) {
+    res.status(500).send(RESTRESPONSE(false, err.message));
+  }
+};
+
 module.exports = {
   getCollectionData,
   getClientAccount,
   getUnReviewedArticles,
   postCollectionData,
+  getCollectionDataWithFilters,
 };

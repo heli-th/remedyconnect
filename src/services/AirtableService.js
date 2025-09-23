@@ -319,6 +319,85 @@ const fetchGlobalBaseAllowedDomains = async () => {
   return data.records;
 };
 
+const fetchCollectionDataWithFilters = async (
+  baseId,
+  tableName,
+  viewName,
+  masterArticleId,
+  updateType,
+  useCache = true
+) => {
+  const encodedView = encodeURIComponent(viewName);
+  const ARTICLE_PATH = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(
+    tableName
+  )}?view=${encodedView}`;
+
+  // Build cache key based on query params
+  const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}`;
+  if (useCache) {
+    const cachedData = getCache(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+  }
+
+  /**apply filters as required */
+
+  let conditions = [];
+
+  if (masterArticleId) {
+    conditions.push(`{MasterArticle} = '${masterArticleId}'`);
+  }
+
+  if (updateType) {
+    conditions.push(`{UpdateType} = '${updateType}'`);
+  }
+
+  let filterByFormula = "";
+  if (conditions.length > 0) {
+    filterByFormula = `AND(${conditions.join(", ")})`;
+  }
+
+  let offset = "";
+  let articles = [];
+  let fetches = 0;
+
+  while (offset !== "done" && fetches < MAX_FETCHES) {
+    let url = ARTICLE_PATH;
+    if (offset) url += `&offset=${offset}`;
+
+    try {
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: "Bearer " + TOKEN,
+          "Content-Type": "application/json",
+        },
+        params: { filterByFormula },
+      });
+
+      const data = response.data;
+      articles.push(...data.records);
+      offset = data.offset || "done";
+      fetches++;
+    } catch (error) {
+      if (error.response?.status === 429) {
+        console.warn(`Status code 429 hit for ${viewName}. Using cache.`);
+        const cached = readFromCache(baseId, viewName);
+        if (cached) return cached;
+        throw new Error("Rate limit hit and no cache available.");
+      }
+
+      throw new Error(`Failed to fetch: ${error.message}`);
+    }
+  }
+
+  /**set Node cache */
+  setCache(cacheKey, articles);
+  /**set json cache */
+  saveToCache(baseId, viewName, articles);
+  return articles;
+};
+
 module.exports = {
   fetchAirtableView,
   isBaseThrottle,
@@ -328,4 +407,5 @@ module.exports = {
   createAirtableRecords,
   fetchClientAccessAccount,
   getGlobalBaseAllowedDomains,
+  fetchCollectionDataWithFilters,
 };
