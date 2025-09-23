@@ -333,7 +333,9 @@ const fetchCollectionDataWithFilters = async (
   )}?view=${encodedView}`;
 
   // Build cache key based on query params
-  const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}`;
+  const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}:${
+    masterArticleId || ""
+  }:${updateType || ""}`;
   if (useCache) {
     const cachedData = getCache(cacheKey);
     if (cachedData) {
