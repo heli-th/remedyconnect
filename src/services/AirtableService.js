@@ -41,10 +41,11 @@ async function fetchAirtableView(baseId, tableName, viewName, useCache = true) {
       articles.push(...data.records);
       offset = data.offset || "done";
       fetches++;
-
+      await updateAPIIsLimitExceeded(baseId, false);
       await delay(250); // avoid hitting rate limit
     } catch (error) {
       if (error.response?.status === 429) {
+        await updateAPIIsLimitExceeded(baseId, true);
         console.warn(`Status code 429 hit for ${viewName}. Using cache.`);
         const cached = readFromCache(baseId, viewName);
         if (cached) return cached;
@@ -72,10 +73,12 @@ const isBaseThrottle = async (baseId) => {
       },
     });
     if (response.status === 200) {
+      await updateAPIIsLimitExceeded(baseId, false);
       return false;
     }
   } catch (error) {
     if (error.response?.status === 429) {
+      await updateAPIIsLimitExceeded(baseId, true);
       return true;
     }
     throw new Error(`Failed to check throttle: ${error.message}`);
@@ -102,8 +105,10 @@ const fetchClientAccount = async (base) => {
     });
 
     data = response.data;
+    await updateAPIIsLimitExceeded(base, false);
   } catch (error) {
     if (error.response?.status === 429) {
+      await updateAPIIsLimitExceeded(base, true);
       console.warn(`Status code 429 hit for ${base}. Using cache.`);
       const cached = readFromCache(base, viewName);
       if (cached) return cached;
@@ -154,8 +159,10 @@ const fetchUnReviewedArticles = async (baseId) => {
       articles.push(...data.records);
       offset = data.offset || "done";
       fetches++;
+      await updateAPIIsLimitExceeded(baseId, false);
     } catch (error) {
       if (error.response?.status === 429) {
+        await updateAPIIsLimitExceeded(baseId, true);
         console.warn(`Status code 429 hit for ${baseId}. Using cache.`);
         const cached = readFromCache(baseId, "UnReviewedArticles");
         if (cached) return cached;
@@ -381,8 +388,10 @@ const fetchCollectionDataWithFilters = async (
       articles.push(...data.records);
       offset = data.offset || "done";
       fetches++;
+      await updateAPIIsLimitExceeded(baseId, false);
     } catch (error) {
       if (error.response?.status === 429) {
+        await updateAPIIsLimitExceeded(baseId, true);
         console.warn(`Status code 429 hit for ${viewName}. Using cache.`);
         const cached = readFromCache(baseId, viewName);
         if (cached) return cached;
@@ -398,6 +407,48 @@ const fetchCollectionDataWithFilters = async (
   /**set json cache */
   saveToCache(baseId, viewName, articles);
   return articles;
+};
+
+const updateAPIIsLimitExceeded = async (baseId, isExceeded) => {
+  const Global_BASE_ID = process.env.BASE_AIRTABLE_ID;
+  const TABLE_NAME = "Client Access";
+
+  /**fetch client account data */
+  const clientAccount = await fetchClientAccessAccount(baseId);
+  if (!clientAccount || clientAccount.length === 0) {
+    throw new Error("Client account not found.");
+  }
+
+  const PATH = `https://api.airtable.com/v0/${Global_BASE_ID}/${encodeURIComponent(
+    TABLE_NAME
+  )}?view=${encodeURIComponent("Grid view")}`;
+
+  try {
+    const requestBody = {
+      records: [
+        {
+          id: clientAccount[0].id,
+          fields: {
+            // ...clientAccount[0].fields,
+            "API Notifier Base Limit Exceeded": isExceeded,
+          },
+        },
+      ],
+    };
+    const updateResponse = await axios.patch(PATH, requestBody, {
+      headers: {
+        Authorization: "Bearer " + TOKEN,
+        "Content-Type": "application/json",
+      },
+    });
+    if (updateResponse.status !== 200) {
+      throw new Error(
+        `Error updating client access: ${updateResponse.statusText}`
+      );
+    }
+  } catch (error) {
+    throw new Error(`Failed to update client access: ${error.message}`);
+  }
 };
 
 module.exports = {
