@@ -415,6 +415,7 @@ const updateAPIIsLimitExceeded = async (baseId, isExceeded) => {
 
   /**fetch client account data */
   const clientAccount = await fetchClientAccessAccount(baseId);
+  if (Global_BASE_ID === baseId) return; // no need to update for global base
   if (!clientAccount || clientAccount.length === 0) {
     throw new Error("Client account not found.");
   }
