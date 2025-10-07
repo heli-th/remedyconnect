@@ -6,6 +6,7 @@ const codeRoutes = require("./codeRoutes");
 const symptomCheckerRoutes = require("./symptomCheckerRoute");
 const kidsSiteVideoRouter = require("./kidsSiteVideoRouter");
 const cacheRoutes = require("./cacheRoutes");
+const emailRoutes = require("./emailRoutes");
 
 const router = express.Router();
 
@@ -28,5 +29,8 @@ router.use("/", kidsSiteVideoRouter);
 
 // Cache routes
 router.use("/", cacheRoutes);
+
+// Email routes
+router.use("/sendEmail", emailRoutes);
 
 module.exports = router;
