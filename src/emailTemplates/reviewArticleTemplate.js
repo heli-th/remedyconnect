@@ -7,16 +7,15 @@ const reviewArticleTemplate = (reviewerName, interfaceLink, articles) => {
                   <table border="1" cellpadding="10">
                       <tr>
                           <th>Article Title</th>
-                          <th>Article Link</th>
                           <th>Version</th>
-                          <th>Categories</th>
+                          <th>Publisher</th>
                       </tr>
             ${articles.map(
               (article) => `
                 <tr>
                     <td>${article.fields["Article Title"]}</td>
                     <td>${article.fields["Version"]}</td>
-                    <td>${article.fields["Categories"]}</td>
+                    <td>${article.fields["Publisher"]}</td>
                 </tr>
                 `
             )}
