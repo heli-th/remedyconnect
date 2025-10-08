@@ -1,9 +1,11 @@
-const { reviewArticleTemplate } = require("../emailTemplates/reviewArticleTemplate");
+const {
+  reviewArticleTemplate,
+} = require("../emailTemplates/reviewArticleTemplate");
 const { sendMail } = require("../services/emailServices");
 const RESTRESPONSE = require("../utils/RESTRESPONSE");
 
 const sendReviewArticleEmailToClient = async (req, res) => {
-  const { toMail, fromMail, articles, clientName } = req.body;
+  const { toMail, fromMail, articles, clientName, interfaceLink } = req.body;
 
   if (!toMail)
     return res.status(400).send(RESTRESPONSE(false, "toMail is required"));
@@ -17,7 +19,7 @@ const sendReviewArticleEmailToClient = async (req, res) => {
       .send(RESTRESPONSE(false, "articles cannot be empty"));
 
   const subject = "Articles assigned for review";
-  const body = reviewArticleTemplate(clientName, articles);
+  const body = reviewArticleTemplate(clientName, interfaceLink, articles);
 
   // Logic to send email
   try {

@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 
 /**
  * Sends an email using Gmail SMTP.
- * 
+ *
  * @param {Object} options
  * @param {string} options.toMail - Recipient email address.
  * @param {string} options.fromMail - Sender email address.

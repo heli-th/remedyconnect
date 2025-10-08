@@ -1,4 +1,4 @@
-const reviewArticleTemplate = (reviewerName, articles) => {
+const reviewArticleTemplate = (reviewerName, interfaceLink, articles) => {
   return `
     <html>
         <body>
@@ -15,16 +15,15 @@ const reviewArticleTemplate = (reviewerName, articles) => {
               (article) => `
                 <tr>
                     <td>${article.fields["Article Title"]}</td>
-                    <td><a href="${article.fields["Article URL"]}">click here</a></td>
-                    <td>${article.fields["version"]}</td>
-                    <td>${article.fields["categories"]}</td>
+                    <td>${article.fields["Version"]}</td>
+                    <td>${article.fields["Categories"]}</td>
                 </tr>
                 `
             )}
             </table>
             <br/>
             <b>
-            Please review your articles<br/>
+            Please review your articles <a href=${interfaceLink}>Click Here</a><br/>
             Thanks,<br/>
             Remedy Connect Team
             </b>
