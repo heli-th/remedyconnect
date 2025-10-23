@@ -5,6 +5,7 @@ const {
   getUnReviewedArticles,
   postCollectionData,
   getCollectionDataWithFilters,
+  getAdvocareIntranetData,
 } = require("../controllers/AirtableController");
 const {
   checkAllowedOrigin,
@@ -20,6 +21,10 @@ router.get(
   checkAllowedOrigin,
   getCollectionDataWithFilters
 );
+router.get(
+  "/getAdvocareIntranetData",
+  checkAllowedOrigin,
+  getAdvocareIntranetData
+);
 
 module.exports = router;
-       

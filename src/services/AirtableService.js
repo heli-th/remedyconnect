@@ -7,7 +7,13 @@ const MAX_FETCHES = 1000;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchAirtableView(baseId, tableName, viewName, useCache = true) {
+async function fetchAirtableView(
+  baseId,
+  tableName,
+  viewName,
+  useCache = true,
+  token_to_use = TOKEN
+) {
   const encodedView = encodeURIComponent(viewName);
   const ARTICLE_PATH = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(
     tableName
@@ -32,7 +38,7 @@ async function fetchAirtableView(baseId, tableName, viewName, useCache = true) {
     try {
       const response = await axios.get(url, {
         headers: {
-          Authorization: "Bearer " + TOKEN,
+          Authorization: "Bearer " + token_to_use,
           "Content-Type": "application/json",
         },
       });
@@ -41,7 +47,7 @@ async function fetchAirtableView(baseId, tableName, viewName, useCache = true) {
       articles.push(...data.records);
       offset = data.offset || "done";
       fetches++;
-      await updateAPIIsLimitExceeded(baseId, false);
+      token_to_use == TOKEN && (await updateAPIIsLimitExceeded(baseId, false));
       await delay(250); // avoid hitting rate limit
     } catch (error) {
       if (error.response?.status === 429) {

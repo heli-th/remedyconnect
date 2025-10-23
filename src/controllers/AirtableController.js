@@ -105,10 +105,36 @@ const getCollectionDataWithFilters = async (req, res) => {
   }
 };
 
+const getAdvocareIntranetData = async (req, res) => {
+  const { base, tableName, viewName } = req.query;
+  const useCache = req.query.useCache !== "false";
+
+  if (!base)
+    return res.status(400).send(RESTRESPONSE(false, "base is required"));
+  if (!tableName)
+    return res.status(400).send(RESTRESPONSE(false, "tableName is required"));
+
+  const token_to_use = process.env.ADVOCARE_INTRANET_TOKEN;
+
+  try {
+    const data = await fetchAirtableView(
+      base,
+      tableName,
+      viewName || "Grid view",
+      useCache,
+      token_to_use
+    );
+    res.send(RESTRESPONSE(true, "Data fetched", { data, length: data.length }));
+  } catch (err) {
+    res.status(500).send(RESTRESPONSE(false, err.message));
+  }
+};
+
 module.exports = {
   getCollectionData,
   getClientAccount,
   getUnReviewedArticles,
   postCollectionData,
   getCollectionDataWithFilters,
+  getAdvocareIntranetData,
 };
