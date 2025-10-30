@@ -458,6 +458,15 @@ const updateAPIIsLimitExceeded = async (baseId, isExceeded) => {
   }
 };
 
+const createSlugFromTitleAndId = (title, id) => {
+  const slugBase = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 50); // limit length to 50 characters
+  return `${slugBase}-${id}`;
+};
+
 module.exports = {
   fetchAirtableView,
   isBaseThrottle,
@@ -468,4 +477,5 @@ module.exports = {
   fetchClientAccessAccount,
   getGlobalBaseAllowedDomains,
   fetchCollectionDataWithFilters,
+  createSlugFromTitleAndId,
 };

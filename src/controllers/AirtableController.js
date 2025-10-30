@@ -4,6 +4,7 @@ const {
   fetchUnReviewedArticles,
   createAirtableRecords,
   fetchCollectionDataWithFilters,
+  createSlugFromTitleAndId,
 } = require("../services/AirtableService");
 const RESTRESPONSE = require("../utils/RESTRESPONSE");
 
@@ -130,6 +131,39 @@ const getAdvocareIntranetData = async (req, res) => {
   }
 };
 
+const getAAPArticles = async (req, res) => {
+  const { base, tableName, viewName } = req.query;
+  const useCache = req.query.useCache !== "false";
+
+  if (!base)
+    return res.status(400).send(RESTRESPONSE(false, "base is required"));
+  if (!tableName)
+    return res.status(400).send(RESTRESPONSE(false, "tableName is required"));
+
+  try {
+    const data = await fetchAirtableView(
+      base,
+      tableName,
+      viewName || "Grid view",
+      useCache
+    );
+
+    const responseData = data.map((record) => ({
+      ...record,
+      fields: {
+        ...record.fields,
+        "Version URL":
+          record.fields["Version URL"] ||
+          createSlugFromTitleAndId(record.fields["Article Name"], record.id),
+      },
+    }));
+
+    res.send(RESTRESPONSE(true, "Data fetched", { responseData }));
+  } catch (err) {
+    res.status(500).send(RESTRESPONSE(false, err.message));
+  }
+};
+
 module.exports = {
   getCollectionData,
   getClientAccount,
@@ -137,4 +171,5 @@ module.exports = {
   postCollectionData,
   getCollectionDataWithFilters,
   getAdvocareIntranetData,
+  getAAPArticles,
 };
