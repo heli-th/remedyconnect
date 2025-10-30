@@ -125,7 +125,26 @@ const getAdvocareIntranetData = async (req, res) => {
       useCache,
       token_to_use
     );
-    res.send(RESTRESPONSE(true, "Data fetched", { data, length: data.length }));
+
+    const responseData = data.map((record) => ({
+      ...record,
+      fields: {
+        ...record.fields,
+        "Version URL":
+          record.fields["Version URL"] ||
+          createSlugFromTitleAndId(
+            record.fields["PageTitle"] || "unTitled",
+            record.id
+          ),
+      },
+    }));
+
+    res.send(
+      RESTRESPONSE(true, "Data fetched", {
+        data: responseData,
+        length: data.length,
+      })
+    );
   } catch (err) {
     res.status(500).send(RESTRESPONSE(false, err.message));
   }
