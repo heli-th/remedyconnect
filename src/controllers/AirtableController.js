@@ -158,7 +158,7 @@ const getAAPArticles = async (req, res) => {
       },
     }));
 
-    res.send(RESTRESPONSE(true, "Data fetched", { responseData }));
+    res.send(RESTRESPONSE(true, "Data fetched", { data: responseData }));
   } catch (err) {
     res.status(500).send(RESTRESPONSE(false, err.message));
   }
