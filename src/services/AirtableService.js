@@ -419,18 +419,18 @@ const updateAPIIsLimitExceeded = async (baseId, isExceeded) => {
   const Global_BASE_ID = process.env.BASE_AIRTABLE_ID;
   const TABLE_NAME = "Client Access";
 
-  /**fetch client account data */
-  const clientAccount = await fetchClientAccessAccount(baseId);
-  if (Global_BASE_ID === baseId) return; // no need to update for global base
-  if (!clientAccount || clientAccount.length === 0) {
-    throw new Error("Client account not found.");
-  }
-
-  const PATH = `https://api.airtable.com/v0/${Global_BASE_ID}/${encodeURIComponent(
-    TABLE_NAME
-  )}?view=${encodeURIComponent("Grid view")}`;
-
   try {
+    /**fetch client account data */
+    const clientAccount = await fetchClientAccessAccount(baseId);
+    if (Global_BASE_ID === baseId) return; // no need to update for global base
+    if (!clientAccount || clientAccount.length === 0) {
+      throw new Error("Client account not found.");
+    }
+
+    const PATH = `https://api.airtable.com/v0/${Global_BASE_ID}/${encodeURIComponent(
+      TABLE_NAME
+    )}?view=${encodeURIComponent("Grid view")}`;
+
     const requestBody = {
       records: [
         {
@@ -454,7 +454,8 @@ const updateAPIIsLimitExceeded = async (baseId, isExceeded) => {
       );
     }
   } catch (error) {
-    throw new Error(`Failed to update client access: ${error.message}`);
+    // throw new Error(`Failed to update client access: ${error.message}`);
+    return null;
   }
 };
 
