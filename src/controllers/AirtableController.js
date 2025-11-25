@@ -5,6 +5,7 @@ const {
   createAirtableRecords,
   fetchCollectionDataWithFilters,
   createSlugFromTitleAndId,
+  fetchClientAccessAccount,
 } = require("../services/AirtableService");
 const RESTRESPONSE = require("../utils/RESTRESPONSE");
 
@@ -183,6 +184,28 @@ const getAAPArticles = async (req, res) => {
   }
 };
 
+const getClientAccessAccountFormAirTableId = async (req, res) => {
+  const { golbalBase, airtableId } = req.query;
+  const useCache = req.query.useCache !== "false";
+
+  if (!airtableId)
+    return res.status(400).send(RESTRESPONSE(false, "airtableId is required"));
+  if (!golbalBase)
+    return res.status(400).send(RESTRESPONSE(false, "base is required"));
+
+  try {
+    const data = await fetchClientAccessAccount(
+      airtableId,
+      golbalBase,
+      useCache
+    );
+
+    res.send(RESTRESPONSE(true, "Data fetched", { data }));
+  } catch (err) {
+    res.status(500).send(RESTRESPONSE(false, err.message));
+  }
+}
+
 module.exports = {
   getCollectionData,
   getClientAccount,
@@ -191,4 +214,5 @@ module.exports = {
   getCollectionDataWithFilters,
   getAdvocareIntranetData,
   getAAPArticles,
+  getClientAccessAccountFormAirTableId
 };

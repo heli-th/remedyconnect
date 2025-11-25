@@ -7,6 +7,7 @@ const {
   getCollectionDataWithFilters,
   getAdvocareIntranetData,
   getAAPArticles,
+  getClientAccessAccountFormAirTableId,
 } = require("../controllers/AirtableController");
 const {
   checkAllowedOrigin,
@@ -28,6 +29,7 @@ router.get(
   getAdvocareIntranetData
 );
 router.get("/getAAPArticles", checkAllowedOrigin, getAAPArticles);
+router.get("/getClientAccessAccountFormAirTableId", getClientAccessAccountFormAirTableId);
 
 
 module.exports = router;

@@ -251,8 +251,8 @@ const createAirtableRecords = async (baseId, tableName, viewName, records) => {
   return addedArticles;
 };
 
-const fetchClientAccessAccount = async (base) => {
-  const Global_BASE_ID = process.env.BASE_AIRTABLE_ID;
+const fetchClientAccessAccount = async (base, globalBase, useCache = true) => {
+  const Global_BASE_ID = globalBase ? globalBase : process.env.BASE_AIRTABLE_ID;
   const CLIENT_ACCOUNT = `https://api.airtable.com/v0/${Global_BASE_ID}/${encodeURIComponent(
     "Client Access"
   )}`;
@@ -261,9 +261,11 @@ const fetchClientAccessAccount = async (base) => {
 
   // Build cache key based on query params
   const cacheKey = `clintAccess:${base}`;
-  const cachedData = getCache(cacheKey);
-  if (cachedData) {
-    return cachedData;
+  if (useCache) {
+    const cachedData = getCache(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
   }
 
   let data;
@@ -346,9 +348,8 @@ const fetchCollectionDataWithFilters = async (
   )}?view=${encodedView}`;
 
   // Build cache key based on query params
-  const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}:${
-    masterArticleId || ""
-  }:${updateType || ""}`;
+  const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}:${masterArticleId || ""
+    }:${updateType || ""}`;
   if (useCache) {
     const cachedData = getCache(cacheKey);
     if (cachedData) {
