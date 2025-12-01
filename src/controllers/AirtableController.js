@@ -84,7 +84,7 @@ const postCollectionData = async (req, res) => {
 };
 
 const getCollectionDataWithFilters = async (req, res) => {
-  const { base, tableName, viewName, masterArticleId, updateType } = req.query;
+  const { base, tableName, viewName, masterArticleId, updateType, resourceIds } = req.query;
   const useCache = req.query.useCache !== "false";
 
   if (!base)
@@ -99,6 +99,7 @@ const getCollectionDataWithFilters = async (req, res) => {
       viewName || "Grid view",
       masterArticleId,
       updateType,
+      resourceIds,
       useCache
     );
     res.send(RESTRESPONSE(true, "Data fetched", { data }));

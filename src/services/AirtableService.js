@@ -340,6 +340,7 @@ const fetchCollectionDataWithFilters = async (
   viewName,
   masterArticleId,
   updateType,
+  resourceIds,
   useCache = true
 ) => {
   const encodedView = encodeURIComponent(viewName);
@@ -349,7 +350,7 @@ const fetchCollectionDataWithFilters = async (
 
   // Build cache key based on query params
   const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}:${masterArticleId || ""
-    }:${updateType || ""}`;
+    }:${updateType || ""}:${resourceIds || ""}`;
   if (useCache) {
     const cachedData = getCache(cacheKey);
     if (cachedData) {
@@ -367,6 +368,14 @@ const fetchCollectionDataWithFilters = async (
 
   if (updateType) {
     conditions.push(`{UpdateType} = '${updateType}'`);
+  }
+
+  if (resourceIds && resourceIds.length > 0) {
+    const orConditions = resourceIds
+      .map((id) => `RECORD_ID() = '${id}'`)
+      .join(", ");
+
+    conditions.push(`OR(${orConditions})`);
   }
 
   let filterByFormula = "";
