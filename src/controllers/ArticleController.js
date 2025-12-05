@@ -8,11 +8,12 @@ const BASE_ID = process.env.BASE_AIRTABLE_ID;
 
 const GetArticlesListByClient = async (req, res) => {
   const baseId = req.query.airtableId;
+  const useCache = req.query.useCache !== "false";
   if (!baseId)
     return res.status(400).send(RESTRESPONSE(false, "airtableId is required"));
 
   try {
-    const articles = await fetchAirtableView(baseId, "Articles", "Grid view");
+    const articles = await fetchAirtableView(baseId, "Articles", "Grid view", useCache);
     res.send(RESTRESPONSE(true, "Articles fetched", { articles }));
   } catch (err) {
     res.status(500).send(RESTRESPONSE(false, err.message));
@@ -22,13 +23,15 @@ const GetArticlesListByClient = async (req, res) => {
 const GetArticlesListByClientCategory = async (req, res) => {
   const baseId = req.query.airtableId;
   const view = req.query.collection;
+  const useCache = req.query.useCache !== "false";
+
   if (!baseId || !view)
     return res.status(400).send(
       RESTRESPONSE(false, "airtableId and collection are required")
     );
 
   try {
-    const articles = await fetchAirtableView(baseId, "Articles", view);
+    const articles = await fetchAirtableView(baseId, "Articles", view, useCache);
     res.send(RESTRESPONSE(true, "Articles by category fetched", { articles }));
   } catch (err) {
     res.status(500).send(RESTRESPONSE(false, err.message));
@@ -37,7 +40,8 @@ const GetArticlesListByClientCategory = async (req, res) => {
 
 const GetArticlesListBykidSiteVideo = async (req, res) => {
   try {
-    const articles = await fetchAirtableView(BASE_ID, "Master Articles", "Kid Site Videos");
+    const useCache = req.query.useCache !== "false";
+    const articles = await fetchAirtableView(BASE_ID, "Master Articles", "Kid Site Videos", useCache);
     res.send(RESTRESPONSE(true, "Kid Site Videos fetched", { articles }));
   } catch (err) {
     res.status(500).send(RESTRESPONSE(false, err.message));
@@ -46,7 +50,8 @@ const GetArticlesListBykidSiteVideo = async (req, res) => {
 
 const GetArticlesListByACI = async (req, res) => {
   try {
-    const articles = await fetchAirtableView(BASE_ID, "Master Articles", "After Care Instructions");
+    const useCache = req.query.useCache !== "false";
+    const articles = await fetchAirtableView(BASE_ID, "Master Articles", "After Care Instructions", useCache);
     res.send(RESTRESPONSE(true, "After Care Instructions fetched", { articles }));
   } catch (err) {
     res.status(500).send(RESTRESPONSE(false, err.message));
@@ -55,7 +60,8 @@ const GetArticlesListByACI = async (req, res) => {
 
 const GetSCRelatedArticles = async (req, res) => {
   try {
-    const articles = await fetchAirtableView(BASE_ID, "Self Care Related Articles", "Grid view");
+    const useCache = req.query.useCache !== "false";
+    const articles = await fetchAirtableView(BASE_ID, "Self Care Related Articles", "Grid view", useCache);
     res.send(RESTRESPONSE(true, "SC Related Articles fetched", { articles }));
   } catch (err) {
     res.status(500).send(RESTRESPONSE(false, err.message));
@@ -64,7 +70,8 @@ const GetSCRelatedArticles = async (req, res) => {
 
 const GetSCArticlesImages = async (req, res) => {
   try {
-    const articles = await fetchAirtableView(BASE_ID, "Self Care Images", "Grid view");
+    const useCache = req.query.useCache !== "false";
+    const articles = await fetchAirtableView(BASE_ID, "Self Care Images", "Grid view", useCache);
     res.send(RESTRESPONSE(true, "SC Article Images fetched", { articles }));
   } catch (err) {
     res.status(500).send(RESTRESPONSE(false, err.message));
@@ -72,10 +79,10 @@ const GetSCArticlesImages = async (req, res) => {
 };
 
 const GetFileContentByType = async (req, res) => {
-  const fileUrl = req.query.fileUrl; 
-  const fileType = req.query.type; 
+  const fileUrl = req.query.fileUrl;
+  const fileType = req.query.type;
 
-  if (!fileUrl || !fileType) { 
+  if (!fileUrl || !fileType) {
     return res.status(404).send(
       RESTRESPONSE(false, "File Url and File type is required in query parameters")
     );
