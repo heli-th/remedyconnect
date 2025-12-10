@@ -186,18 +186,18 @@ const getAAPArticles = async (req, res) => {
 };
 
 const getClientAccessAccountFormAirTableId = async (req, res) => {
-  const { golbalBase, airtableId } = req.query;
+  const { globalBase, airtableId } = req.query;
   const useCache = req.query.useCache !== "false";
 
   if (!airtableId)
     return res.status(400).send(RESTRESPONSE(false, "airtableId is required"));
-  if (!golbalBase)
-    return res.status(400).send(RESTRESPONSE(false, "base is required"));
+  if (!globalBase)
+    return res.status(400).send(RESTRESPONSE(false, "globalBase is required"));
 
   try {
     const data = await fetchClientAccessAccount(
       airtableId,
-      golbalBase,
+      globalBase,
       useCache
     );
 
