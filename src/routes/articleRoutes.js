@@ -6,7 +6,7 @@ const {
   GetArticlesListByACI,
   GetFileContentByType,
   GetSCArticlesImages,
-  GetSCRelatedArticles,
+  GetSCRelatedArticles
 } = require("../controllers/ArticleController");
 const {
   checkAllowedOrigin,

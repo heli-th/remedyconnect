@@ -12,6 +12,7 @@ const {
 const {
   checkAllowedOrigin,
 } = require("../middlewares/allowedOriginMiddleware");
+const { getCollectionDataFromGlobalBase } = require("../controllers/ArticleController");
 
 const router = express.Router();
 router.get("/getCollectionData", checkAllowedOrigin, getCollectionData);
@@ -30,6 +31,12 @@ router.get(
 );
 router.get("/getAAPArticles", checkAllowedOrigin, getAAPArticles);
 router.get("/getClientAccessAccountFormAirTableId", getClientAccessAccountFormAirTableId);
+
+router.get(
+  "/get-collection-data/:base/:publisherName",
+  checkAllowedOrigin,
+  getCollectionDataFromGlobalBase
+);
 
 
 module.exports = router;

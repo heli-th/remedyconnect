@@ -1,5 +1,5 @@
 const RESTRESPONSE = require("../utils/RESTRESPONSE");
-const { fetchAirtableView } = require("../services/AirtableService");
+const { fetchAirtableView, fetchCollectionDataWithFilters, getPublisherByPublisherName, fetchClientAccessAccount } = require("../services/AirtableService");
 const { default: axios } = require("axios");
 const cheerio = require("cheerio");
 const mammoth = require("mammoth");
@@ -118,6 +118,46 @@ const GetFileContentByType = async (req, res) => {
   }
 }
 
+const getCollectionDataFromGlobalBase = async (req, res) => {
+  const { base, publisherName } = req.params;
+  const useCache = req.query.useCache !== "false";
+
+  if (!base)
+    return res.status(400).send(RESTRESPONSE(false, "base is required"));
+
+  try {
+    /**Check Client Access */
+    const clientAccount = await fetchClientAccessAccount(base, BASE_ID, useCache);
+    if (!clientAccount || clientAccount.length === 0) {
+      return res.status(403).send(RESTRESPONSE(false, "No access to the base"));
+    }
+
+    /** Get publisher Id */
+    const publisherData = await getPublisherByPublisherName(BASE_ID, publisherName, useCache);
+    if (!publisherData || publisherData.length === 0) {
+      return res.status(404).send(RESTRESPONSE(false, "Publisher not found"));
+    }
+    const publisherNameValue = publisherData.fields["Library Name"];
+    const publisherId = publisherData.id
+
+    /**Check client has publisher access */
+    const clientHasPublisherAccess = clientAccount.some(account => {
+      const allowedPublishers = account.fields["Global Publisher Direct Access"] || [];
+      return allowedPublishers && allowedPublishers.includes(publisherId);
+    });
+
+    if (!clientHasPublisherAccess) {
+      return res.status(403).send(RESTRESPONSE(false, "No access to the publisher"));
+    }
+
+    /**Get collection data by publisher id */
+    const articles = await fetchCollectionDataWithFilters(BASE_ID, "Master Articles", "Grid view", null, null, null, publisherNameValue, useCache);
+    res.send(RESTRESPONSE(true, "Articles fetched", { articles }));
+  } catch (err) {
+    res.status(500).send(RESTRESPONSE(false, err.message));
+  }
+}
+
 module.exports = {
   GetArticlesListByClient,
   GetArticlesListByClientCategory,
@@ -125,5 +165,6 @@ module.exports = {
   GetArticlesListByACI,
   GetSCRelatedArticles,
   GetSCArticlesImages,
-  GetFileContentByType
+  GetFileContentByType,
+  getCollectionDataFromGlobalBase
 };

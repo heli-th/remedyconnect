@@ -341,6 +341,7 @@ const fetchCollectionDataWithFilters = async (
   masterArticleId,
   updateType,
   resourceIds,
+  publisherId,
   useCache = true
 ) => {
   const encodedView = encodeURIComponent(viewName);
@@ -376,6 +377,10 @@ const fetchCollectionDataWithFilters = async (
       .join(", ");
 
     conditions.push(`OR(${orConditions})`);
+  }
+
+  if (publisherId) {
+    conditions.push(`AND({Publisher}, FIND("Self Care Decisions Adult", ARRAYJOIN({Publisher})))`);
   }
 
   let filterByFormula = "";
@@ -478,6 +483,45 @@ const createSlugFromTitleAndId = (title, id) => {
   return `${slugBase}-${id}`;
 };
 
+const getPublisherByPublisherName = async (baseId, publisherName, useCache = true) => {
+  const PUBLISHER_PATH = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(
+    "Publishers"
+  )}`;
+
+  // Build cache key based on query params
+  const cacheKey = `publisherCache:${baseId}:Publishers:Grid view:${publisherName || ""
+    }`;
+  if (useCache) {
+    const cachedData = getCache(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+  }
+
+  let filterByFormula = `{Library Name} = '${publisherName}'`;
+
+  try {
+    const response = await axios.get(PUBLISHER_PATH, {
+      headers: {
+        Authorization: "Bearer " + TOKEN,
+        "Content-Type": "application/json",
+      },
+      params: { filterByFormula },
+    });
+
+    const data = response.data;
+    return data.records.length > 0 ? data.records[0] : null;
+  } catch (error) {
+    if (error.response?.status === 429) {
+      console.warn(`Status code 429 hit for ${publisherName}. Using cache.`);
+      const cached = readFromCache(GLOBAL_BASEID, "Publishers");
+      if (cached) return cached;
+      throw new Error("Rate limit hit and no cache available.");
+    }
+    throw new Error(`Failed to fetch: ${error.message}`);
+  }
+}
+
 module.exports = {
   fetchAirtableView,
   isBaseThrottle,
@@ -489,4 +533,5 @@ module.exports = {
   getGlobalBaseAllowedDomains,
   fetchCollectionDataWithFilters,
   createSlugFromTitleAndId,
+  getPublisherByPublisherName
 };

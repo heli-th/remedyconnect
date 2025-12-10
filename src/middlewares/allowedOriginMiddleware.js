@@ -7,6 +7,7 @@ const checkAllowedOrigin = async (req, res, next) => {
   const origin = req.headers.origin;
   const { base, baseId, airtableId } = req.query;
   const { base: baseBody } = req.body;
+  const { base: baseFromParams } = req.params;
   let hostname;
 
   try {
@@ -46,7 +47,7 @@ const checkAllowedOrigin = async (req, res, next) => {
     return next();
   }
 
-  if (!base && !baseId && !airtableId && !baseBody) {
+  if (!base && !baseId && !airtableId && !baseBody && !baseFromParams) {
     return res
       .status(400)
       .json({ message: "base or baseId query parameter is required" });
@@ -54,7 +55,7 @@ const checkAllowedOrigin = async (req, res, next) => {
 
   try {
     const allowedDomains = await getAllowedDomains(
-      base || baseId || airtableId || baseBody
+      base || baseId || airtableId || baseBody || baseFromParams
     );
     if (
       allowedDomains?.some(
