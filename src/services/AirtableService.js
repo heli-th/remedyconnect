@@ -351,7 +351,7 @@ const fetchCollectionDataWithFilters = async (
 
   // Build cache key based on query params
   const cacheKey = `airtableCache:${baseId}:${tableName}:${viewName}:${masterArticleId || ""
-    }:${updateType || ""}:${resourceIds || ""}`;
+    }:${updateType || ""}:${resourceIds || ""}:${publisherId || ""}`;
   if (useCache) {
     const cachedData = getCache(cacheKey);
     if (cachedData) {
@@ -380,7 +380,7 @@ const fetchCollectionDataWithFilters = async (
   }
 
   if (publisherId) {
-    conditions.push(`AND({Publisher}, FIND("Self Care Decisions Adult", ARRAYJOIN({Publisher})))`);
+    conditions.push(`REGEX_MATCH(ARRAYJOIN({Publisher}), "(^|, )${publisherId}($|, )")`);
   }
 
   let filterByFormula = "";
