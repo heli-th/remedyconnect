@@ -3,8 +3,10 @@ const { fetchAirtableView, fetchCollectionDataWithFilters, getPublisherByPublish
 const { default: axios } = require("axios");
 const cheerio = require("cheerio");
 const mammoth = require("mammoth");
+const { getUnsupportedFileTypeHTML, getCharacterLimitExceededHTML, getArticleConversionErrorHTML } = require("../HTMLTemplates/FileGenerationTemplate");
 
 const BASE_ID = process.env.BASE_AIRTABLE_ID;
+const MAX_HTML_LENGTH = 100000;
 
 const GetArticlesListByClient = async (req, res) => {
   const baseId = req.query.airtableId;
@@ -79,44 +81,81 @@ const GetSCArticlesImages = async (req, res) => {
 };
 
 const GetFileContentByType = async (req, res) => {
-  const fileUrl = req.query.fileUrl;
-  const fileType = req.query.type;
+  const { fileUrl, type: fileType } = req.query;
 
   if (!fileUrl || !fileType) {
-    return res.status(404).send(
-      RESTRESPONSE(false, "File Url and File type is required in query parameters")
+    return res.status(400).send(
+      RESTRESPONSE(false, "Invalid request", {
+        data: `
+          <div style="font-family: Arial;">
+            <h2>⚠️ Missing Information</h2>
+            <p><strong>File URL</strong> and <strong>File Type</strong> are required.</p>
+            <p>Please check the link or contact support.</p>
+          </div>
+        `
+      })
     );
   }
 
   try {
-    // Use axios to fetch the file as a buffer
-    const axiosResponse = await axios.get(fileUrl, { responseType: 'arraybuffer' });
-    const buffer = Buffer.from(axiosResponse.data);
+    const axiosResponse = await axios.get(fileUrl, {
+      responseType: "arraybuffer",
+      timeout: 15000,
+    });
 
+    const buffer = Buffer.from(axiosResponse.data);
     let htmlContent;
-    if (fileType === "text/html") {
-      const html = buffer.toString("utf8");
-      const $ = cheerio.load(html);
-      htmlContent = $.html();
-    } else if (fileType === "application/pdf") {
-      const data = await pdfParse(buffer);
-      htmlContent = `<div>${data.text.replace(/\n/g, "<br>")}</div>`;
-    } else if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-      const result = await mammoth.convertToHtml({ buffer });
-      htmlContent = result.value;
-    } else {
-      throw new Error("Unsupported file type");
+
+    switch (fileType) {
+      case "text/html": {
+        const html = buffer.toString("utf8");
+        const $ = cheerio.load(html);
+        htmlContent = $.html();
+        break;
+      }
+
+      case "application/pdf": {
+        const data = await pdfParse(buffer);
+        htmlContent = `<div>${data.text.replace(/\n/g, "<br>")}</div>`;
+        break;
+      }
+
+      case "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+        const result = await mammoth.convertToHtml({ buffer });
+        htmlContent = result.value;
+        break;
+      }
+
+      default: {
+        htmlContent = getUnsupportedFileTypeHTML();
+        break;
+      }
+    }
+
+    if (htmlContent && htmlContent.length > MAX_HTML_LENGTH) {
+      htmlContent = getCharacterLimitExceededHTML(
+        MAX_HTML_LENGTH,
+        htmlContent.length
+      );
     }
 
     return res.send(
-      RESTRESPONSE(true, "File content extracted successfully", { data: htmlContent })
+      RESTRESPONSE(true, "File content extracted successfully", {
+        data: htmlContent,
+      })
     );
   } catch (err) {
-    return res.status(500).send(
-      RESTRESPONSE(false, "Error extracting content", { error: err.message })
+    const fallbackHTML = getArticleConversionErrorHTML();
+
+    return res.status(200).send(
+      RESTRESPONSE(true, "Article created with conversion warning", {
+        data: fallbackHTML,
+        warning: "ARTICLE_HTML_CONVERSION_FAILED",
+      })
     );
   }
-}
+};
+
 
 const getCollectionDataFromGlobalBase = async (req, res) => {
   const { base, publisherName } = req.params;
