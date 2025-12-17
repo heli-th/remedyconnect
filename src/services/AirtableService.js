@@ -2,7 +2,7 @@ const axios = require("axios");
 const { saveToCache, readFromCache } = require("../utils/airtableCache");
 const { getCache, setCache } = require("./cacheServices");
 require("dotenv").config();
-const TOKEN = process.env.AIRTABLE_TOKEN;
+const TOKEN = process.env.AIRTABLE_API_KEY;
 const MAX_FETCHES = 1000;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -522,6 +522,43 @@ const getPublisherByPublisherName = async (baseId, publisherName, useCache = tru
   }
 }
 
+const getTokenById = async (tokenId, useCache = true) => {
+  const baseId = process.env.BASE_AIRTABLE_ID;
+  const TOKEN_PATH = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(
+    "Access Tokens"
+  )}/${tokenId}`;
+
+  // Build cache key based on query params
+  const cacheKey = `TokenCache:${baseId}:Access Tokens:Grid view:${tokenId || ""
+    }`;
+  if (useCache) {
+    const cachedData = getCache(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+  }
+
+  try {
+    const response = await axios.get(TOKEN_PATH, {
+      headers: {
+        Authorization: "Bearer " + TOKEN,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = response.data;
+    return data;
+  } catch (error) {
+    if (error.response?.status === 429) {
+      console.warn(`Status code 429 hit for ${publisherName}. Using cache.`);
+      const cached = readFromCache(GLOBAL_BASEID, "Publishers");
+      if (cached) return cached;
+      throw new Error("Rate limit hit and no cache available.");
+    }
+    throw new Error(`Failed to fetch: ${error.message}`);
+  }
+}
+
 module.exports = {
   fetchAirtableView,
   isBaseThrottle,
@@ -533,5 +570,6 @@ module.exports = {
   getGlobalBaseAllowedDomains,
   fetchCollectionDataWithFilters,
   createSlugFromTitleAndId,
-  getPublisherByPublisherName
+  getPublisherByPublisherName,
+  getTokenById
 };

@@ -8,6 +8,7 @@ const {
   getAdvocareIntranetData,
   getAAPArticles,
   getClientAccessAccountFormAirTableId,
+  getClientAccessToken,
 } = require("../controllers/AirtableController");
 const {
   checkAllowedOrigin,
@@ -36,6 +37,12 @@ router.get(
   "/get-collection-data/:base/:publisherName",
   checkAllowedOrigin,
   getCollectionDataFromGlobalBase
+);
+
+router.get(
+  "/get-client-access-token",
+  checkAllowedOrigin,
+  getClientAccessToken
 );
 
 

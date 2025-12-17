@@ -6,6 +6,7 @@ const {
   fetchCollectionDataWithFilters,
   createSlugFromTitleAndId,
   fetchClientAccessAccount,
+  getTokenById,
 } = require("../services/AirtableService");
 const RESTRESPONSE = require("../utils/RESTRESPONSE");
 
@@ -207,6 +208,30 @@ const getClientAccessAccountFormAirTableId = async (req, res) => {
   }
 }
 
+const getClientAccessToken = async (req, res) => {
+  const { base } = req.query;
+  const useCache = req.query.useCache !== "false";
+
+  if (!base)
+    return res.status(400).send(RESTRESPONSE(false, "base is required"));
+
+  try {
+    const clientAccount = await fetchClientAccessAccount(base, null, useCache);
+    if (!clientAccount || clientAccount.length === 0) {
+      return res.status(404).send(RESTRESPONSE(false, "No client account found"));
+    }
+
+    const token = await getTokenById(clientAccount[0].fields['Token Id'], useCache);
+    if (!token) {
+      return res.status(404).send(RESTRESPONSE(false, "No token found for the client"));
+    }
+
+    res.send(RESTRESPONSE(true, "Data fetched", { Token: token.fields['Token'] }));
+  } catch (error) {
+    res.status(500).send(RESTRESPONSE(false, error.message));
+  }
+}
+
 module.exports = {
   getCollectionData,
   getClientAccount,
@@ -215,5 +240,6 @@ module.exports = {
   getCollectionDataWithFilters,
   getAdvocareIntranetData,
   getAAPArticles,
-  getClientAccessAccountFormAirTableId
+  getClientAccessAccountFormAirTableId,
+  getClientAccessToken
 };
