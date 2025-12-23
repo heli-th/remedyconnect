@@ -4,6 +4,7 @@ const { default: axios } = require("axios");
 const cheerio = require("cheerio");
 const mammoth = require("mammoth");
 const { getUnsupportedFileTypeHTML, getCharacterLimitExceededHTML, getArticleConversionErrorHTML } = require("../HTMLTemplates/FileGenerationTemplate");
+const PdfParse = require("pdf-parse");
 
 const BASE_ID = process.env.BASE_AIRTABLE_ID;
 const MAX_HTML_LENGTH = 100000;
@@ -115,7 +116,7 @@ const GetFileContentByType = async (req, res) => {
       }
 
       case "application/pdf": {
-        const data = await pdfParse(buffer);
+        const data = await PdfParse(buffer);
         htmlContent = `<div>${data.text.replace(/\n/g, "<br>")}</div>`;
         break;
       }
