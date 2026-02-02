@@ -8,6 +8,7 @@ const kidsSiteVideoRouter = require("./kidsSiteVideoRouter");
 const cacheRoutes = require("./cacheRoutes");
 const emailRoutes = require("./emailRoutes");
 const dudaRoutes = require("./dudaRoutes");
+const reviewbuilderRoutes = require("./reviewbuilderRoutes");
 
 const router = express.Router();
 
@@ -36,5 +37,8 @@ router.use("/sendEmail", emailRoutes);
 
 /**Duda Routes */
 router.use("/duda", dudaRoutes);
+
+/**Review Builder Routes */
+router.use("/reviewbuilder",reviewbuilderRoutes);
 
 module.exports = router;
