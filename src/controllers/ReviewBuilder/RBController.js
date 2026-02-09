@@ -19,7 +19,7 @@ const chunkArray = (arr, size = 10) =>
 
 const addToQueueList = async (req, res) => {
   try {
-    const { client,dudaId,submittedBy,contacts,sender,message, source = "Duda Widget" } = req.body;
+    const { dudaId,submittedBy,contacts,sender,message, source = "Duda Widget" } = req.body;
 
     if (!Array.isArray(contacts) || contacts.length === 0) {
       return res.status(400).json({ message: "No contacts provided" });
@@ -31,7 +31,6 @@ const addToQueueList = async (req, res) => {
     for (const batch of batches) {
       const records = batch.map((value) => ({
         fields: {
-          Client: client,
           "Duda Id": dudaId,
           "Submitted By": submittedBy,
           "Send To Number Or Email": value,
