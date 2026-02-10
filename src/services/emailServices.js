@@ -40,4 +40,9 @@ const sendMail = async ({ toMail, fromMail, subject, body }) => {
   }
 };
 
-module.exports = { sendMail };
+
+function isEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+module.exports = { sendMail, isEmail };
