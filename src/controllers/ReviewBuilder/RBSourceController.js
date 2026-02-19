@@ -42,6 +42,7 @@ const createSource = async (req, res) => {
       "Zip Code": req.body.zipCode,
       "Source ID": req.body.sourceId,
       "Rating Threshold": req.body.ratingThreshold,
+      "Review Page URL": req.body.reviewPageUrl,
       "Survey Page URL": req.body.surveyPageUrl,
       "Time Zone": req.body.timeZone,
     });
@@ -84,6 +85,7 @@ const updateSource = async (req, res) => {
       "Source ID": req.body.sourceId,
       "Rating Threshold": req.body.ratingThreshold,
       "Survey Page URL": req.body.surveyPageUrl,
+      "Review Page URL": req.body.reviewPageUrl,
       "Time Zone": req.body.timeZone,
     });
 
