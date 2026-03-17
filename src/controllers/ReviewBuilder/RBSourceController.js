@@ -104,10 +104,40 @@ const deleteSource = async (req, res) => {
   }
 };
 
+
+const getRecordsByDudaId = async (req, res) => {
+  try {
+    const dudaId = req.params.dudaId; // from URL
+
+    const records = [];
+
+    await airbase(TABLE_NAME)
+      .select({
+        filterByFormula: `{Duda ID} = "${dudaId}"`
+      })
+      .eachPage((page, fetchNextPage) => {
+        page.forEach((record) => {
+          records.push({
+            id: record.id,
+            fields: record.fields
+          });
+        });
+
+        fetchNextPage();
+      });
+
+    res.json(records);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   getSourcesList,
   createSource,
   getSourceById,
   updateSource,
   deleteSource,
+  getRecordsByDudaId,
 };

@@ -12,7 +12,8 @@ const {
     createSource,
     getSourceById,
     updateSource,
-    deleteSource
+    deleteSource,
+    getRecordsByDudaId,
 } = require("../controllers/ReviewBuilder/RBSourceController");
 
 const router = express.Router();
@@ -28,4 +29,5 @@ router.post("/createSource", createSource);
 router.get("/getSourceById/:id", getSourceById);
 router.put("/updateSource/:id", updateSource);
 router.delete("/deleteSource/:id", deleteSource);
+router.get("/getRecordsByDudaId/:dudaId", getRecordsByDudaId);
 module.exports = router;

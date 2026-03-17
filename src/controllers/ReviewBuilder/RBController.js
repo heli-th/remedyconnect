@@ -5,6 +5,7 @@ const isEmail = require("validator/lib/isEmail");
 const BASE_ID = process.env.REVIEWBUILDER_BASE_AIRTABLE_ID;
 const API_KEY = process.env.REVIEWBUILDER_AIRTABLE_API_KEY;
 
+const MASTER_TABLE = "Client Master";
 const QUEUE_TABLE = "Queue Manager";
 const CLIENT_TABLE = "Clients-Details";
 
@@ -35,6 +36,16 @@ const fetchClientByDudaId = async (dudaId) => {
   const response = await airtableClient.get(`/${CLIENT_TABLE}`, {
     params: {
       filterByFormula: `{DudaId} = "${dudaId}"`,
+    },
+  });
+
+  return response?.data?.records ?? [];
+};
+
+const fetchClientMasterByDudaId = async (dudaId) => {
+  const response = await airtableClient.get(`/${MASTER_TABLE}`, {
+    params: {
+      filterByFormula: `{Duda ID} = "${dudaId}"`,
     },
   });
 
@@ -73,6 +84,17 @@ const addToQueueList = async (req, res) => {
     const clientName =
       clientRecords[0]?.fields?.["Client Name"] ?? "Unknown Client";
 
+
+    /* IMPLEMENT CODE TO FECTH THE RECORD_ID IN MASTER haveing SAME DUDAID (Column Duda ID in master table) */
+    // ---------- Fetch Client ----------
+    const masterRecord = await fetchClientMasterByDudaId(dudaId);
+    if (masterRecord.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Client Master not found for this Duda ID" });
+    }
+
+     const masterRecordId = masterRecord[0]?.id;
     // ---------- Insert Queue Records ----------
     const batches = chunkArray(contacts, 10);
     let inserted = 0;
@@ -88,6 +110,8 @@ const addToQueueList = async (req, res) => {
           Client: clientName,
           "Source Type": isEmail(sender) ? "Email" : "Text",
           Source: source,
+          "Client Master": [masterRecordId],
+
         },
       }));
 
