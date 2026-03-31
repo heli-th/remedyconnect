@@ -142,6 +142,98 @@ const getRatingsByDudaId = async (req, res) => {
   }
 };
 
+const insertRating = async (req, res) => {
+  try {
+    const { dudaId, rating, toProvider } = req.body;
+ 
+    // Validate dudaId
+    if (!dudaId) {
+      return res.status(400).json({ message: "DudaId required" });
+    }
+    if (!toProvider || toProvider.trim() === "") {
+      return res.status(400).json({
+        message: "To Provider required",
+      });
+    }
+    // Validate rating
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        message: "Rating must be between 1 and 5",
+      });
+    }
+ 
+    // Fetch client master record
+    const masterRecord = await fetchClientMasterByDudaId(dudaId);
+ 
+    if (masterRecord.length === 0) {
+      return res.status(404).json({ message: "Client master not found" });
+    }
+ 
+    const masterRecordId = masterRecord[0]?.id;
+    const name = masterRecord[0]?.fields?.["Client Name"]?.[0] || "Unknown";
+ 
+    // Get user IP
+    const fromIP =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.socket?.remoteAddress ||
+      req.ip;
+ 
+    //CHECK existing rating
+    const existingRecords = await airbase(TABLE_NAME)
+      .select({
+        filterByFormula: `AND(
+    {From IP} = "${fromIP}",
+    {To Provider} = "${toProvider || ""}"
+  )`,
+      })
+      .firstPage();
+ 
+    let record;
+ 
+    // If record exists → UPDATE
+    if (existingRecords.length > 0) {
+      record = await airbase(TABLE_NAME).update([
+        {
+          id: existingRecords[0].id,
+          fields: {
+            Rating: rating,
+          },
+        },
+      ]);
+ 
+      return res.status(200).json({
+        success: true,
+        message: "Rating updated",
+        recordId: existingRecords[0].id,
+      });
+    }
+    // If not exists → CREATE
+    record = await airbase(TABLE_NAME).create({
+      Name: name,
+      "Client Master Ref": [masterRecordId],
+      "From IP": fromIP,
+      Active: true,
+      Rating: rating,
+      "To Provider": toProvider || "",
+    });
+ 
+    res.status(201).json({
+      success: true,
+      message: "Rating inserted",
+      recordId: record.id,
+    });
+  } catch (err) {
+    console.error(err);
+ 
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+ 
+
 module.exports = {
   getRatingsByDudaId,
+  insertRating,
 };

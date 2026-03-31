@@ -16,7 +16,7 @@ const {
     getRecordsByDudaId,
 } = require("../controllers/ReviewBuilder/RBSourceController");
 
-const { getRatingsByDudaId } = require("../controllers/ReviewBuilder/RBRatingsController");
+const { getRatingsByDudaId, insertRating } = require("../controllers/ReviewBuilder/RBRatingsController");
 
 const router = express.Router();
 // RBController routes
@@ -33,4 +33,5 @@ router.put("/updateSource/:id", updateSource);
 router.delete("/deleteSource/:id", deleteSource);
 router.get("/getRecordsByDudaId/:dudaId", getRecordsByDudaId);
 router.get("/getRatingsByDudaId/:dudaId", getRatingsByDudaId);
+router.post("/insertRating", insertRating);
 module.exports = router;

@@ -1,13 +1,28 @@
 const axios = require("axios");
 const RESTRESPONSE = require("../../utils/RESTResponse");
 const Airtable = require("airtable");
-
 const TABLE_NAME = "Review Sources";
+const CLIENT_TABLE = "Clients-Details";
 
 // Airtable config
 const airbase = new Airtable({
   apiKey: process.env.REVIEWBUILDER_AIRTABLE_API_KEY,
 }).base(process.env.REVIEWBUILDER_BASE_AIRTABLE_ID);
+
+const fetchClientByDudaId = async (dudaId) => {
+  try {
+    const records = await airbase(CLIENT_TABLE)
+      .select({
+        filterByFormula: `{DudaId} = "${dudaId}"`,
+      })
+      .all();
+
+    return records || [];
+  } catch (error) {
+    console.error("Airtable fetch error:", error);
+    throw error;
+  }
+};
 
 const getSourcesList = async (req, res) => {
   console.log(airbase);
@@ -32,9 +47,20 @@ const getSourcesList = async (req, res) => {
 
 const createSource = async (req, res) => {
   try {
+
+     const clientRecords = await fetchClientByDudaId(req.body.dudaId);
+
+    if (clientRecords.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Client not found for this Duda ID" });
+    }
+
+
     const record = await airbase(TABLE_NAME).create({
       "Source Name": req.body.sourceName,
       "Duda ID": req.body.dudaId,
+      "Clients-Details": [clientRecords[0]?.id], // Link to Clients-Details table
       "Source Type": req.body.sourceType,
       "Street Address": req.body.streetAddress,
       City: req.body.city,
@@ -75,6 +101,14 @@ const getSourceById = async (req, res) => {
 
 const updateSource = async (req, res) => {
   try {
+    const clientRecords = await fetchClientByDudaId(req.body.dudaId);
+
+    if (clientRecords.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Client not found for this Duda ID" });
+    }
+
     const record = await airbase(TABLE_NAME).update(req.params.id, {
       "Source Name": req.body.sourceName,
       "Source Type": req.body.sourceType,
@@ -83,6 +117,7 @@ const updateSource = async (req, res) => {
       State: req.body.state,
       "Zip Code": req.body.zipCode,
       "Source ID": req.body.sourceId,
+      "Clients-Details": [clientRecords[0]?.id],
       "Rating Threshold": req.body.ratingThreshold,
       "Survey Page URL": req.body.surveyPageUrl,
       "Review Page URL": req.body.reviewPageUrl,
