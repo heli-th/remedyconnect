@@ -2,6 +2,7 @@ const Airtable = require("airtable");
 const RESTRESPONSE = require("../../utils/RESTResponse");
 
 const TABLE_NAME = "Clients-Rating";
+const MASTER_TABLE = "Client Master";
 
 // Airtable config
 const airbase = new Airtable({
@@ -9,10 +10,29 @@ const airbase = new Airtable({
 }).base(process.env.REVIEWBUILDER_BASE_AIRTABLE_ID);
 
 /**
+ * Escape double quotes for Airtable formula strings
+ */
+const escapeFormulaValue = (value = "") => String(value).replace(/"/g, '\\"');
+
+/**
+ * Fetch Client Master records by Duda ID (WITHOUT AXIOS)
+ */
+const fetchClientMasterByDudaId = async (dudaId) => {
+  const records = await airbase(MASTER_TABLE)
+    .select({
+      filterByFormula: `{Duda ID} = "${escapeFormulaValue(dudaId)}"`,
+      maxRecords: 1,
+    })
+    .firstPage();
+
+  return records;
+};
+
+/**
  * GET /api/reviewbuilder/getRatingsByDudaId/:dudaId
  *
  * Query Params:
- * - pageSize   (default: 10)
+ * - pageSize   (default: 50, max: 100)
  * - offset     (Airtable pagination token string)
  * - search     (search text)
  * - filterBy   (name | provider) default: provider
@@ -25,7 +45,7 @@ const getRatingsByDudaId = async (req, res) => {
   try {
     const dudaId = req.params.dudaId;
 
-    const pageSize = Math.min(parseInt(req.query.pageSize??50, 10) || 50, 100);
+    const pageSize = Math.min(parseInt(req.query.pageSize ?? 50, 10) || 50, 100);
     const offset = req.query.offset || "";
 
     const search = (req.query.search || "").trim();
@@ -38,11 +58,11 @@ const getRatingsByDudaId = async (req, res) => {
     const conditions = [];
 
     // Required filter
-    conditions.push(`{Duda ID} = "${String(dudaId).replace(/"/g, '\\"')}"`);
+    conditions.push(`{Duda ID} = "${escapeFormulaValue(dudaId)}"`);
 
     // Search filter
     if (search) {
-      const safeSearch = String(search).replace(/"/g, '\\"').toLowerCase();
+      const safeSearch = escapeFormulaValue(search.toLowerCase());
 
       if (filterBy === "name") {
         conditions.push(`SEARCH("${safeSearch}", LOWER({Name})) > 0`);
@@ -56,7 +76,7 @@ const getRatingsByDudaId = async (req, res) => {
       conditions.push(`{Rating} = ${parseInt(rating, 10)}`);
     }
 
-    // Active filter (ONLY if you have an Active field in Airtable)
+    // Active filter
     if (active === "active") {
       conditions.push(`{Active} = 1`);
     } else if (active === "inactive") {
@@ -77,13 +97,15 @@ const getRatingsByDudaId = async (req, res) => {
 
     const table = airbase(TABLE_NAME);
 
-    // Build query params manually for Airtable REST via runAction
+    // IMPORTANT:
+    // Use URLSearchParams with runAction because Airtable SDK select() expects numeric offset,
+    // but REST API pagination offset is a string token like "itrXXXXX"
     const queryParams = new URLSearchParams();
     queryParams.append("pageSize", String(pageSize));
     queryParams.append("filterByFormula", filterByFormula);
 
     if (offset) {
-      queryParams.append("offset", offset); // string token like itrXXXX
+      queryParams.append("offset", offset); // string token
     }
 
     // Sort by Reviewed At DESC
@@ -142,96 +164,107 @@ const getRatingsByDudaId = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/reviewbuilder/insertRating
+ *
+ * Body:
+ * - dudaId
+ * - rating
+ * - toProvider
+ */
 const insertRating = async (req, res) => {
   try {
     const { dudaId, rating, toProvider } = req.body;
- 
+
     // Validate dudaId
     if (!dudaId) {
       return res.status(400).json({ message: "DudaId required" });
     }
+
     if (!toProvider || toProvider.trim() === "") {
       return res.status(400).json({
         message: "To Provider required",
       });
     }
+
     // Validate rating
-    if (!rating || rating < 1 || rating > 5) {
+    const numericRating = Number(rating);
+    if (!numericRating || numericRating < 1 || numericRating > 5) {
       return res.status(400).json({
         message: "Rating must be between 1 and 5",
       });
     }
- 
-    // Fetch client master record
-    const masterRecord = await fetchClientMasterByDudaId(dudaId);
- 
-    if (masterRecord.length === 0) {
+
+    // Fetch client master record (WITHOUT AXIOS)
+    const masterRecords = await fetchClientMasterByDudaId(dudaId);
+
+    if (masterRecords.length === 0) {
       return res.status(404).json({ message: "Client master not found" });
     }
- 
-    const masterRecordId = masterRecord[0]?.id;
-    const name = masterRecord[0]?.fields?.["Client Name"]?.[0] || "Unknown";
- 
+
+    const masterRecord = masterRecords[0];
+    const masterRecordId = masterRecord.id;
+    const name = masterRecord?.fields?.["Client Name"]?.[0] || "Unknown";
+
     // Get user IP
     const fromIP =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
       req.socket?.remoteAddress ||
       req.ip;
- 
-    //CHECK existing rating
+
+    // Check existing rating by same IP + provider
     const existingRecords = await airbase(TABLE_NAME)
       .select({
         filterByFormula: `AND(
-    {From IP} = "${fromIP}",
-    {To Provider} = "${toProvider || ""}"
-  )`,
+          {From IP} = "${escapeFormulaValue(fromIP)}",
+          {To Provider} = "${escapeFormulaValue(toProvider)}"
+        )`,
+        maxRecords: 1,
       })
       .firstPage();
- 
-    let record;
- 
+
     // If record exists → UPDATE
     if (existingRecords.length > 0) {
-      record = await airbase(TABLE_NAME).update([
+      const updatedRecords = await airbase(TABLE_NAME).update([
         {
           id: existingRecords[0].id,
           fields: {
-            Rating: rating,
+            Rating: numericRating,
           },
         },
       ]);
- 
+
       return res.status(200).json({
         success: true,
         message: "Rating updated",
-        recordId: existingRecords[0].id,
+        recordId: updatedRecords[0].id,
       });
     }
+
     // If not exists → CREATE
-    record = await airbase(TABLE_NAME).create({
+    const createdRecord = await airbase(TABLE_NAME).create({
       Name: name,
       "Client Master Ref": [masterRecordId],
       "From IP": fromIP,
       Active: true,
-      Rating: rating,
-      "To Provider": toProvider || "",
+      Rating: numericRating,
+      "To Provider": toProvider,
     });
- 
-    res.status(201).json({
+
+    return res.status(201).json({
       success: true,
       message: "Rating inserted",
-      recordId: record.id,
+      recordId: createdRecord.id,
     });
   } catch (err) {
-    console.error(err);
- 
-    res.status(500).json({
+    console.error("insertRating error:", err);
+
+    return res.status(500).json({
       success: false,
       error: err.message,
     });
   }
 };
- 
 
 module.exports = {
   getRatingsByDudaId,
