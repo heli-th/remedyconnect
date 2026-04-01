@@ -3,6 +3,7 @@ const RESTRESPONSE = require("../../utils/RESTResponse");
 
 const TABLE_NAME = "Clients-Rating";
 const MASTER_TABLE = "Client Master";
+const SOURCES_TABLE = "Review Sources";
 
 // Airtable config
 const airbase = new Airtable({
@@ -21,6 +22,21 @@ const fetchClientMasterByDudaId = async (dudaId) => {
   const records = await airbase(MASTER_TABLE)
     .select({
       filterByFormula: `{Duda ID} = "${escapeFormulaValue(dudaId)}"`,
+      maxRecords: 1,
+    })
+    .firstPage();
+
+  return records;
+};
+
+
+/**
+ * Fetch Review Sources records by Place ID (WITHOUT AXIOS)
+ */
+const fetchSourceByPlaceId = async (placeId) => {
+  const records = await airbase(SOURCES_TABLE)
+    .select({
+      filterByFormula: `{Source ID} = "${escapeFormulaValue(placeId)}"`,
       maxRecords: 1,
     })
     .firstPage();
@@ -206,6 +222,13 @@ const insertRating = async (req, res) => {
     const masterRecordId = masterRecord.id;
     const name = masterRecord?.fields?.["Client Name"]?.[0] || "Unknown";
 
+    const sourceRecords = await fetchSourceByPlaceId(toProvider);
+
+    if (sourceRecords.length === 0) {
+      return res.status(404).json({ message: "Review source not found" });
+    }
+     const sourceRecordId = sourceRecords[0]?.id;
+
     // Get user IP
     const fromIP =
       req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
@@ -230,6 +253,7 @@ const insertRating = async (req, res) => {
           id: existingRecords[0].id,
           fields: {
             Rating: numericRating,
+            SourceDetails: [sourceRecordId],
           },
         },
       ]);
@@ -248,6 +272,7 @@ const insertRating = async (req, res) => {
       "From IP": fromIP,
       Active: true,
       Rating: numericRating,
+      SourceDetails: [sourceRecordId],
       "To Provider": toProvider,
     });
 
