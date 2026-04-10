@@ -9,6 +9,7 @@ const cacheRoutes = require("./cacheRoutes");
 const emailRoutes = require("./emailRoutes");
 const dudaRoutes = require("./dudaRoutes");
 const reviewbuilderRoutes = require("./reviewbuilderRoutes");
+const airtableCssRoutes = require("./airtableCssRoutes");
 
 const router = express.Router();
 
@@ -40,5 +41,8 @@ router.use("/duda", dudaRoutes);
 
 /**Review Builder Routes */
 router.use("/reviewbuilder",reviewbuilderRoutes);
+
+/* Update the AirtableCss  Duda Css  library*/
+router.use("/airtablecss", airtableCssRoutes);
 
 module.exports = router;

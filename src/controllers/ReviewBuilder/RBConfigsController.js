@@ -233,6 +233,7 @@ const fetchConfigsByDudaId = async (req, res) => {
       sourceBy: clientRecord["Source By"],
       autoApproveRatings: clientRecord["Auto Approve Ratings"],
       notificationEmails: clientRecord["Notification Emails"],
+      timeZone: clientRecord["Time Zone"],
       linkedRecords: {
         details: detailsRef,
         sendingConfigs,
