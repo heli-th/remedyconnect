@@ -47,11 +47,7 @@ const TABLE_FIELDS = {
     "Valid End Time",
     "Timezone",
   ],
-  [TABLES.TIME_ZONES]: [
-    "Display Name",
-    "IANA ID",
-    "Active",
-  ],
+  [TABLES.TIME_ZONES]: ["Display Name", "IANA ID", "Active"],
 };
 
 // -----------------------------
@@ -92,7 +88,10 @@ const fetchRecordById = async (tableName, recordId) => {
     const record = await airbase(tableName).find(recordId);
     return formatRecord(record, tableName);
   } catch (error) {
-    console.error(`Error fetching record ${recordId} from ${tableName}:`, error.message);
+    console.error(
+      `Error fetching record ${recordId} from ${tableName}:`,
+      error.message,
+    );
     return null;
   }
 };
@@ -104,7 +103,7 @@ const fetchLinkedRecords = async (tableName, recordIds = []) => {
   if (!Array.isArray(recordIds) || recordIds.length === 0) return [];
 
   const results = await Promise.all(
-    recordIds.map((id) => fetchRecordById(tableName, id))
+    recordIds.map((id) => fetchRecordById(tableName, id)),
   );
 
   return results.filter(Boolean);
@@ -119,8 +118,7 @@ const fetchSingleLinkedRecord = async (tableName, recordIds = []) => {
 };
 
 const isValidEmail = (email) => {
-  const emailRegex =
-    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
   return emailRegex.test(email);
 };
 
@@ -137,14 +135,24 @@ const isValidTime = (time) => {
  * Match sending config Type against Source By
  */
 const shouldUpdateSendingConfig = (type, sourceByValues = []) => {
-  const normalizedType = String(type || "").trim().toLowerCase();
+  const normalizedType = String(type || "")
+    .trim()
+    .toLowerCase();
 
   // direct matches
   if (sourceByValues.includes(normalizedType)) return true;
 
   // flexible matching if Source By values are like "Text Only", "Email Only"
-  if (normalizedType === "text" && sourceByValues.some((v) => v.includes("text"))) return true;
-  if (normalizedType === "email" && sourceByValues.some((v) => v.includes("email"))) return true;
+  if (
+    normalizedType === "text" &&
+    sourceByValues.some((v) => v.includes("text"))
+  )
+    return true;
+  if (
+    normalizedType === "email" &&
+    sourceByValues.some((v) => v.includes("email"))
+  )
+    return true;
 
   return false;
 };
@@ -154,7 +162,8 @@ const shouldUpdateSendingConfig = (type, sourceByValues = []) => {
  */
 const normalizeSourceBy = (sourceBy) => {
   if (!sourceBy) return [];
-  if (Array.isArray(sourceBy)) return sourceBy.map((v) => String(v).trim().toLowerCase());
+  if (Array.isArray(sourceBy))
+    return sourceBy.map((v) => String(v).trim().toLowerCase());
   return [String(sourceBy).trim().toLowerCase()];
 };
 
@@ -185,9 +194,7 @@ const fetchConfigsByDudaId = async (req, res) => {
     const { dudaId } = req.params;
 
     if (!dudaId) {
-      return res
-        .status(400)
-        .json(RESTRESPONSE(false, "Duda ID is required"));
+      return res.status(400).json(RESTRESPONSE(false, "Duda ID is required"));
     }
 
     // Find client record by Duda ID
@@ -196,52 +203,56 @@ const fetchConfigsByDudaId = async (req, res) => {
     if (!records || records.length === 0) {
       return res
         .status(404)
-        .json(RESTRESPONSE(false, "No client config found for provided Duda ID"));
+        .json(
+          RESTRESPONSE(false, "No client config found for provided Duda ID"),
+        );
     }
 
     const clientRecord = formatRecord(records[0], TABLES.CLIENT_MASTER);
 
     // Fetch linked records in parallel
-    const [
-      detailsRef,
-      sendingConfigs,
-      timeZone,
-    ] = await Promise.all([
-      fetchSingleLinkedRecord(TABLES.CLIENT_DETAILS, clientRecord["Details Ref"]),
-      fetchLinkedRecords(TABLES.SENDING_CONFIGS, clientRecord["Sending Configs Ref"]),
+    const [detailsRef, sendingConfigs, timeZone] = await Promise.all([
+      fetchSingleLinkedRecord(
+        TABLES.CLIENT_DETAILS,
+        clientRecord["Details Ref"],
+      ),
+      fetchLinkedRecords(
+        TABLES.SENDING_CONFIGS,
+        clientRecord["Sending Configs Ref"],
+      ),
       fetchSingleLinkedRecord(TABLES.TIME_ZONES, clientRecord["Time Zone"]),
     ]);
 
     // Final response payload (only selected columns)
     const enrichedData = {
-        id: clientRecord.id,
-        dudaId: clientRecord["Duda ID"],
-        account: clientRecord["Account"],
-        clientName: clientRecord["Client Name"],
-        reviewBuilderBasic: clientRecord["Review Builder Basic"],
-        sourceBy: clientRecord["Source By"],
-        autoApproveRatings: clientRecord["Auto Approve Ratings"],
-        notificationEmails: clientRecord["Notification Emails"],
-        linkedRecords: {
-            details: detailsRef,
-            sendingConfigs,
-            timeZone,
-        },
+      id: clientRecord.id,
+      dudaId: clientRecord["Duda ID"],
+      account: clientRecord["Account"],
+      clientName: clientRecord["Client Name"],
+      reviewBuilderBasic: clientRecord["Review Builder Basic"],
+      sourceBy: clientRecord["Source By"],
+      autoApproveRatings: clientRecord["Auto Approve Ratings"],
+      notificationEmails: clientRecord["Notification Emails"],
+      linkedRecords: {
+        details: detailsRef,
+        sendingConfigs,
+        timeZone,
+      },
     };
 
-    return res.status(200).json(
-      RESTRESPONSE(true, "Client config fetched successfully", enrichedData)
-    );
+    return res
+      .status(200)
+      .json(
+        RESTRESPONSE(true, "Client config fetched successfully", enrichedData),
+      );
   } catch (error) {
-
     return res.status(500).json(
       RESTRESPONSE(false, "Failed to fetch client config", {
         error: error.message,
-      })
+      }),
     );
   }
 };
-
 
 /* Update The configs  */
 // -----------------------------
@@ -275,9 +286,7 @@ const updateConfigsByDudaId = async (req, res) => {
     // Basic Validation
     // -----------------------------
     if (!dudaId) {
-      return res.status(400).json(
-        RESTRESPONSE(false, "Duda ID is required")
-      );
+      return res.status(400).json(RESTRESPONSE(false, "Duda ID is required"));
     }
 
     const hasClientMasterUpdate =
@@ -289,9 +298,9 @@ const updateConfigsByDudaId = async (req, res) => {
       validStartTime !== undefined || validEndTime !== undefined;
 
     if (!hasClientMasterUpdate && !hasSendingConfigUpdate) {
-      return res.status(400).json(
-        RESTRESPONSE(false, "At least one update field is required")
-      );
+      return res
+        .status(400)
+        .json(RESTRESPONSE(false, "At least one update field is required"));
     }
 
     // -----------------------------
@@ -299,22 +308,35 @@ const updateConfigsByDudaId = async (req, res) => {
     // -----------------------------
     if (timeZoneRecordId !== undefined) {
       if (typeof timeZoneRecordId !== "string" || !timeZoneRecordId.trim()) {
-        return res.status(400).json(
-          RESTRESPONSE(false, "timeZoneRecordId must be a valid Airtable record ID")
-        );
+        return res
+          .status(400)
+          .json(
+            RESTRESPONSE(
+              false,
+              "timeZoneRecordId must be a valid Airtable record ID",
+            ),
+          );
       }
 
-      const timeZoneRecord = await fetchRecordById(TABLES.TIME_ZONES, timeZoneRecordId);
+      const timeZoneRecord = await fetchRecordById(
+        TABLES.TIME_ZONES,
+        timeZoneRecordId,
+      );
       if (!timeZoneRecord) {
-        return res.status(400).json(
-          RESTRESPONSE(false, "Provided timeZoneRecordId does not exist in Timezones table")
-        );
+        return res
+          .status(400)
+          .json(
+            RESTRESPONSE(
+              false,
+              "Provided timeZoneRecordId does not exist in Timezones table",
+            ),
+          );
       }
 
       if (timeZoneRecord.Active === false) {
-        return res.status(400).json(
-          RESTRESPONSE(false, "Provided timezone is inactive")
-        );
+        return res
+          .status(400)
+          .json(RESTRESPONSE(false, "Provided timezone is inactive"));
       }
     }
 
@@ -325,9 +347,9 @@ const updateConfigsByDudaId = async (req, res) => {
       autoApproveRatings !== undefined &&
       typeof autoApproveRatings !== "boolean"
     ) {
-      return res.status(400).json(
-        RESTRESPONSE(false, "autoApproveRatings must be true or false")
-      );
+      return res
+        .status(400)
+        .json(RESTRESPONSE(false, "autoApproveRatings must be true or false"));
     }
 
     // -----------------------------
@@ -336,10 +358,18 @@ const updateConfigsByDudaId = async (req, res) => {
     let normalizedEmailList = null;
 
     if (notificationEmails !== undefined) {
-      if (typeof notificationEmails !== "string" || !notificationEmails.trim()) {
-        return res.status(400).json(
-          RESTRESPONSE(false, "notificationEmails must be a comma-separated string")
-        );
+      if (
+        typeof notificationEmails !== "string" ||
+        !notificationEmails.trim()
+      ) {
+        return res
+          .status(400)
+          .json(
+            RESTRESPONSE(
+              false,
+              "notificationEmails must be a comma-separated string",
+            ),
+          );
       }
 
       normalizedEmailList = notificationEmails
@@ -348,17 +378,24 @@ const updateConfigsByDudaId = async (req, res) => {
         .filter(Boolean);
 
       if (normalizedEmailList.length === 0) {
-        return res.status(400).json(
-          RESTRESPONSE(false, "At least one valid email is required")
-        );
+        return res
+          .status(400)
+          .json(RESTRESPONSE(false, "At least one valid email is required"));
       }
 
-      const invalidEmails = normalizedEmailList.filter((email) => !isValidEmail(email));
+      const invalidEmails = normalizedEmailList.filter(
+        (email) => !isValidEmail(email),
+      );
 
       if (invalidEmails.length > 0) {
-        return res.status(400).json(
-          RESTRESPONSE(false, `Invalid email(s): ${invalidEmails.join(", ")}`)
-        );
+        return res
+          .status(400)
+          .json(
+            RESTRESPONSE(
+              false,
+              `Invalid email(s): ${invalidEmails.join(", ")}`,
+            ),
+          );
       }
     }
 
@@ -366,24 +403,36 @@ const updateConfigsByDudaId = async (req, res) => {
     // Validate Times
     // -----------------------------
     if (validStartTime !== undefined && !isValidTime(validStartTime)) {
-      return res.status(400).json(
-        RESTRESPONSE(false, "validStartTime must be in HH:mm format (24-hour)")
-      );
+      return res
+        .status(400)
+        .json(
+          RESTRESPONSE(
+            false,
+            "validStartTime must be in HH:mm format (24-hour)",
+          ),
+        );
     }
 
     if (validEndTime !== undefined && !isValidTime(validEndTime)) {
-      return res.status(400).json(
-        RESTRESPONSE(false, "validEndTime must be in HH:mm format (24-hour)")
-      );
+      return res
+        .status(400)
+        .json(
+          RESTRESPONSE(false, "validEndTime must be in HH:mm format (24-hour)"),
+        );
     }
 
     if (
       (validStartTime !== undefined && validEndTime === undefined) ||
       (validStartTime === undefined && validEndTime !== undefined)
     ) {
-      return res.status(400).json(
-        RESTRESPONSE(false, "Both validStartTime and validEndTime are required together")
-      );
+      return res
+        .status(400)
+        .json(
+          RESTRESPONSE(
+            false,
+            "Both validStartTime and validEndTime are required together",
+          ),
+        );
     }
 
     // -----------------------------
@@ -392,9 +441,11 @@ const updateConfigsByDudaId = async (req, res) => {
     const records = await fetchClientByDudaId(dudaId);
 
     if (!records || records.length === 0) {
-      return res.status(404).json(
-        RESTRESPONSE(false, "No client config found for provided Duda ID")
-      );
+      return res
+        .status(404)
+        .json(
+          RESTRESPONSE(false, "No client config found for provided Duda ID"),
+        );
     }
 
     const rawClientRecord = records[0];
@@ -418,14 +469,19 @@ const updateConfigsByDudaId = async (req, res) => {
 
       if (notificationEmails !== undefined) {
         // Save exactly as comma-separated string
-        clientMasterFieldsToUpdate["Notification Emails"] = normalizedEmailList.join(", ");
+        clientMasterFieldsToUpdate["Notification Emails"] =
+          normalizedEmailList.join(", ");
       }
 
-      const updatedClientRecord = await airbase(TABLES.CLIENT_MASTER).update(rawClientRecord.id,
-         clientMasterFieldsToUpdate
+      const updatedClientRecord = await airbase(TABLES.CLIENT_MASTER).update(
+        rawClientRecord.id,
+        clientMasterFieldsToUpdate,
       );
 
-      updatedClientMaster = formatRecord(updatedClientRecord, TABLES.CLIENT_MASTER);
+      updatedClientMaster = formatRecord(
+        updatedClientRecord,
+        TABLES.CLIENT_MASTER,
+      );
     }
 
     // -----------------------------
@@ -437,17 +493,24 @@ const updateConfigsByDudaId = async (req, res) => {
       const sendingConfigIds = clientRecord["Sending Configs Ref"] || [];
 
       if (!Array.isArray(sendingConfigIds) || sendingConfigIds.length === 0) {
-        return res.status(400).json(
-          RESTRESPONSE(false, "No linked sending configs found for this client")
-        );
+        return res
+          .status(400)
+          .json(
+            RESTRESPONSE(
+              false,
+              "No linked sending configs found for this client",
+            ),
+          );
       }
 
       const sourceByValues = normalizeSourceBy(clientRecord["Source By"]);
 
       if (!sourceByValues.length) {
-        return res.status(400).json(
-          RESTRESPONSE(false, "Source By is not configured for this client")
-        );
+        return res
+          .status(400)
+          .json(
+            RESTRESPONSE(false, "Source By is not configured for this client"),
+          );
       }
 
       // Fetch all linked sending configs
@@ -456,22 +519,30 @@ const updateConfigsByDudaId = async (req, res) => {
           try {
             return await airbase(TABLES.SENDING_CONFIGS).find(recordId);
           } catch (error) {
-            console.error(`Error fetching sending config ${recordId}:`, error.message);
+            console.error(
+              `Error fetching sending config ${recordId}:`,
+              error.message,
+            );
             return null;
           }
-        })
+        }),
       );
 
       const validSendingConfigRecords = sendingConfigRecords.filter(Boolean);
 
       const recordsToUpdate = validSendingConfigRecords.filter((record) =>
-        shouldUpdateSendingConfig(record.fields["Type"], sourceByValues)
+        shouldUpdateSendingConfig(record.fields["Type"], sourceByValues),
       );
 
       if (recordsToUpdate.length === 0) {
-        return res.status(400).json(
-          RESTRESPONSE(false, "No sending config records matched the client's Source By")
-        );
+        return res
+          .status(400)
+          .json(
+            RESTRESPONSE(
+              false,
+              "No sending config records matched the client's Source By",
+            ),
+          );
       }
 
       const updatePayload = recordsToUpdate.map((record) => ({
@@ -487,12 +558,14 @@ const updateConfigsByDudaId = async (req, res) => {
 
       for (let i = 0; i < updatePayload.length; i += chunkSize) {
         const chunk = updatePayload.slice(i, i + chunkSize);
-        const updatedRecords = await airbase(TABLES.SENDING_CONFIGS).update(chunk);
+        const updatedRecords = await airbase(TABLES.SENDING_CONFIGS).update(
+          chunk,
+        );
         updatedChunks.push(...updatedRecords);
       }
 
       updatedSendingConfigs = updatedChunks.map((record) =>
-        formatRecord(record, TABLES.SENDING_CONFIGS)
+        formatRecord(record, TABLES.SENDING_CONFIGS),
       );
     }
 
@@ -501,7 +574,7 @@ const updateConfigsByDudaId = async (req, res) => {
     // -----------------------------
     const latestTimeZone = await fetchSingleLinkedRecord(
       TABLES.TIME_ZONES,
-      updatedClientMaster["Time Zone"]
+      updatedClientMaster["Time Zone"],
     );
 
     // -----------------------------
@@ -522,23 +595,58 @@ const updateConfigsByDudaId = async (req, res) => {
       },
     };
 
-    return res.status(200).json(
-      RESTRESPONSE(true, "Client config updated successfully", responsePayload)
-    );
+    return res
+      .status(200)
+      .json(
+        RESTRESPONSE(
+          true,
+          "Client config updated successfully",
+          responsePayload,
+        ),
+      );
   } catch (error) {
     console.error("updateConfigsByDudaId error:", error);
 
     return res.status(500).json(
       RESTRESPONSE(false, "Failed to update client config", {
         error: error.message,
-      })
+      }),
     );
   }
 };
 
+const getTimeZonesList = async (req, res) => {
+  try {
+    const records = await airbase(TABLES.TIME_ZONES)
+      .select({
+        filterByFormula: `{Common} = TRUE()`,
+      })
+      .all();
 
+    //  const timeZones = records.map((record) =>
+    //       formatRecord(record, TABLES.TIME_ZONES),
+    //  );
+
+    const timeZones = records.map(
+      (record) =>
+        `<option value="${record.id}">${record.get("Display Name")}</option>`,
+    );
+
+    return res
+      .status(200)
+      .json(RESTRESPONSE(true, "Options generated", timeZones.join("")));
+  } catch (error) {
+    console.error("getTimeZonesList error:", error);
+    return res.status(500).json(
+      RESTRESPONSE(false, "Failed to fetch time zones", {
+        error: error.message,
+      }),
+    );
+  }
+};
 
 module.exports = {
   fetchConfigsByDudaId,
   updateConfigsByDudaId,
+  getTimeZonesList,
 };
