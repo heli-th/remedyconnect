@@ -17,7 +17,7 @@ const {
 } = require("../controllers/ReviewBuilder/RBSourceController");
 
 const { getRatingsByDudaId, insertRating } = require("../controllers/ReviewBuilder/RBRatingsController");
-const { fetchConfigsByDudaId } = require("../controllers/ReviewBuilder/RBConfigsController");
+const { fetchConfigsByDudaId, updateConfigsByDudaId } = require("../controllers/ReviewBuilder/RBConfigsController");
 
 const router = express.Router();
 // RBController routes
@@ -37,4 +37,6 @@ router.get("/getRatingsByDudaId/:dudaId", getRatingsByDudaId);
 router.post("/insertRating", insertRating);
 
 router.get("/getConfigsByDudaId/:dudaId", fetchConfigsByDudaId);
+router.put("/updateConfigsByDudaId/:dudaId", updateConfigsByDudaId);
+
 module.exports = router;
