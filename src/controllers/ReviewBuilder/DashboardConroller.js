@@ -121,6 +121,9 @@ const getQueueSummaryBySiteId = async (req, res) => {
   }
 };
 
+/* Create An API to fetch queue records list by view name as status filter for a site ID */
+
+
 module.exports = {
   getQueueSummaryBySiteId,
 };
