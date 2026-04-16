@@ -18,6 +18,7 @@ const {
 
 const { getRatingsByDudaId, insertRating } = require("../controllers/ReviewBuilder/RBRatingsController");
 const { fetchConfigsByDudaId, updateConfigsByDudaId, getTimeZonesList } = require("../controllers/ReviewBuilder/RBConfigsController");
+const { getQueueSummaryBySiteId } = require("../controllers/ReviewBuilder/DashboardConroller");
 
 const router = express.Router();
 // RBController routes
@@ -39,5 +40,8 @@ router.post("/insertRating", insertRating);
 router.get("/getTimeZonesList", getTimeZonesList);
 router.get("/getConfigsByDudaId/:dudaId", fetchConfigsByDudaId);
 router.put("/updateConfigsByDudaId/:dudaId", updateConfigsByDudaId);
+
+/* Dashboard Routes */
+router.get("/getQueueSummaryBySiteId/:dudaId", getQueueSummaryBySiteId);
 
 module.exports = router;

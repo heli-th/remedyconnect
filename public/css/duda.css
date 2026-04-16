@@ -1,6 +1,78 @@
-/* Global */
-p{
-color:red;
+.rb-widget{
+
+--rc-bg: #ffffff;
+
+ --rc-border: #e5e7eb;
+
+ --rc-title-color: #1a1a2e;
+
+ --rc-title-size: 1.15rem;
+
+ --rc-btn-bg: #ff0000;
+
+ --rc-btn-color: #ffffff;
+
+ --rc-btn-radius: 6px;
+
+ --rc-logo-height: 44px;
+
+ --rc-bar-height: 64px;
+
 }
 
+
+
+.rb-widget,
+
+.rb-widget h1,
+
+.rb-widget h2,
+
+.rb-widget h3,
+
+.rb-widget h4,
+
+.rb-widget h5,
+
+.rb-widget h6,
+
+.rb-widget p,
+
+.rb-widget li { font-family: 'Lato', sans-serif!important;color:#000!important;}
+
+
+
+.rb-widget h1{font-size:28px!important;color:#000!important;}
+
+.rb-widget h2{font-size:24px!important;color:#000!important;}
+
+.rb-widget h3{font-size:22px!important;color:#000!important;}
+
+.rb-widget h4{font-size:20px!important;color:#000!important;}
+
+.rb-widget h5{font-size:22px!important;color:#000!important;}
+
+.rb-widget h6{font-size:18px!important;color:#000!important;}
+
+
+
+.rb-widget p, 
+
+.rb-widget li, 
+
+.rb-widget div{ font-size:18px!important}
+
+
+
+.rb-widget .logowrap {  flex-shrink: 0;  display: flex;  align-items: center; }
+
+.rb-widget .logo {  height: 44px!important;  width: auto!important;  object-fit: contain;  display: block; }
+
+.rb-widget .logo.rc-logo-hidden {  display: none; }
+
+
+
+
+
+.rc-navbar__logo-wrap{border:solid 1px #ff0000;}
 
