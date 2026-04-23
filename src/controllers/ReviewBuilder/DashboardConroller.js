@@ -24,14 +24,12 @@ const airbase = new Airtable({
   apiKey: process.env.REVIEWBUILDER_AIRTABLE_API_KEY,
 }).base(process.env.REVIEWBUILDER_BASE_AIRTABLE_ID);
 
-
 const airtableClient = axios.create({
   baseURL: `https://api.airtable.com/v0/${process.env.REVIEWBUILDER_BASE_AIRTABLE_ID}`,
   headers: {
     Authorization: `Bearer ${process.env.REVIEWBUILDER_AIRTABLE_API_KEY}`,
   },
 });
-
 
 function getDateFilter(filterType) {
   const now = dayjs();
@@ -57,7 +55,6 @@ function getDateFilter(filterType) {
   };
 }
 
-
 const buildFilterFormula = ({ dudaId, status, filterType }) => {
   let conditions = [];
 
@@ -75,13 +72,37 @@ const buildFilterFormula = ({ dudaId, status, filterType }) => {
 
     conditions.push(
       `IS_AFTER({Created}, '${from}')`,
-      `IS_BEFORE({Created}, '${to}')`
+      `IS_BEFORE({Created}, '${to}')`,
     );
   }
 
   return conditions.length ? `AND(${conditions.join(",")})` : "";
 };
 
+function buildFilter({ dudaId, status, startDate, endDate }) {
+  let conditions = [];
+
+  if (dudaId) {
+    conditions.push(`{Duda Id} = '${dudaId}'`);
+  }
+
+  if (status) {
+    conditions.push(`{Status} = '${status}'`);
+  }
+
+  if (startDate && endDate) {
+    conditions.push(
+      `AND(
+        IS_AFTER({Created}, '${startDate}'),
+        IS_BEFORE({Created}, '${endDate}')
+      )`
+    );
+  }
+
+  if (!conditions.length) return "";
+
+  return `AND(${conditions.join(",")})`;
+}
 /* Create API:
 Get by Duda Site ID
 To fetch the queue: It Will work on filters  Current week and Before 7 days (default wil be current week)
@@ -210,7 +231,10 @@ const getQueueRecordsBySiteId = async (req, res) => {
       hasMore: !!nextOffset,
     });
   } catch (error) {
-    console.error("Pagination API Error:", error.response?.data || error.message);
+    console.error(
+      "Pagination API Error:",
+      error.response?.data || error.message,
+    );
 
     return res.status(500).json({
       success: false,
@@ -220,12 +244,137 @@ const getQueueRecordsBySiteId = async (req, res) => {
   }
 };
 
+/* Get client summary by site ID */
+const getClientMessageSummaryBySiteId = async (req, res) => {
+  try {
+    const { dudaId } = req.params;
 
+    const {
+      status,
+      pageSize = 5,
+      offset,
+      filterType = "this_week",
+    } = req.query;
 
+    // ─────────────────────────────────────────
+    // DATE RANGE LOGIC
+    // ─────────────────────────────────────────
+    const now = dayjs();
+    let startDate, endDate;
 
+    switch (filterType) {
+      case "this_week":
+        startDate = now.startOf("week").toISOString();
+        endDate = now.toISOString();
+        break;
+      case "prev_7":
+        startDate = now.subtract(6, "day").startOf("day").toISOString();
+        endDate = now.toISOString();
+        break;
+      case "prev_30":
+        startDate = now.subtract(29, "day").startOf("day").toISOString();
+        endDate = now.toISOString();
+        break;
+      case "this_month":
+        startDate = now.startOf("month").toISOString();
+        endDate = now.toISOString();
+        break;
+      case "prev_month":
+        startDate = now.subtract(1, "month").startOf("month").toISOString();
+        endDate = now.subtract(1, "month").endOf("month").toISOString();
+        break;
+      default:
+        startDate = now.subtract(6, "day").toISOString();
+        endDate = now.toISOString();
+    }
 
+    // ─────────────────────────────────────────
+    // FILTER FORMULA
+    // ─────────────────────────────────────────
+    const filterFormula = buildFilter({
+      dudaId,
+      status,
+      startDate,
+      endDate,
+    });
+
+    // ─────────────────────────────────────────
+    // FETCH ALL RECORDS (for total count)
+    // ─────────────────────────────────────────
+    let allRecords = [];
+
+    await airbase(TABLES.QUEUE)
+      .select({
+        filterByFormula: filterFormula || undefined,
+        pageSize: 100,
+      })
+      .eachPage((records, fetchNextPage) => {
+        allRecords.push(...records);
+        fetchNextPage();
+      });
+
+    // ─────────────────────────────────────────
+    // TOTAL COUNT
+    // ─────────────────────────────────────────
+    const totalCount = allRecords.length;
+
+    // ─────────────────────────────────────────
+    // STATUS COUNTS (important for your widget)
+    // ─────────────────────────────────────────
+    const statusCounts = {};
+
+    allRecords.forEach((rec) => {
+      const s = rec.get("Status") || "Unknown";
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
+    });
+
+    // ─────────────────────────────────────────
+    // PAGINATION (manual slicing)
+    // ─────────────────────────────────────────
+    let startIndex = 0;
+
+    if (offset) {
+      startIndex = parseInt(offset, 10);
+    }
+
+    const paginatedRecords = allRecords.slice(
+      startIndex,
+      startIndex + parseInt(pageSize),
+    );
+
+    const nextOffset =
+      startIndex + parseInt(pageSize) < totalCount
+        ? startIndex + parseInt(pageSize)
+        : null;
+
+    // ─────────────────────────────────────────
+    // RESPONSE
+    // ─────────────────────────────────────────
+    res.json({
+      success: true,
+      totalCount,
+      statusCounts,
+      nextOffset,
+      hasMore: !!nextOffset,
+      records: paginatedRecords.map((rec) => ({
+        id: rec.id,
+        ...rec.fields,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 module.exports = {
   getQueueSummaryBySiteId,
   getQueueRecordsBySiteId,
+  getClientMessageSummaryBySiteId,
 };
+
+//https://externalcontent.remedyconnect.com/api/reviewbuilder/getQueueRecordsBySiteId/946f7a96?status=Finished&filterType=current_week
+//http://localhost:3000/api/reviewbuilder/getClientMessageSummaryBySiteId/946f7a96?status=Finished&filterType=current_week
