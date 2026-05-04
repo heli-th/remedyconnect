@@ -556,7 +556,7 @@ const getRatingSummary = async (req, res) => {
           const sourceId = sources[0];
           const threshold = sourceThresholdMap[sourceId] ?? 0;
 
-          if (rating >= threshold) {
+          if (rating > threshold) {
             positiveCount++;
           } else {
             negativeCount++;
