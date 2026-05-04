@@ -9,6 +9,8 @@ const TABLES = {
   MASTER: "Client Master",
   SOURCES: "Review Sources",
   QUEUE: "Queue Manager",
+  REVIEW_SOURCES: "Review Sources",
+
 };
 const STATUS_LIST = [
   "Pending",
@@ -508,12 +510,87 @@ const getClientRatingsSummaryBySiteId = async (req, res) => {
   }
 };
 
+const getRatingSummary = async (req, res) => {
+  try {
+    const { dudaId } = req.params;
+
+    if (!dudaId) {
+      return res.status(400).json({
+        success: false,
+        message: "dudaId is required",
+      });
+    }
+
+    // 1️⃣ Fetch Review Sources (thresholds)
+    const sourceThresholdMap = {};
+
+    await airbase(TABLES.REVIEW_SOURCES)
+      .select({
+        filterByFormula: `{Duda ID} = "${dudaId}"`,
+      })
+      .eachPage((records, fetchNextPage) => {
+        records.forEach((record) => {
+          const threshold = record.get("Rating Threshold") || 0;
+          sourceThresholdMap[record.id] = threshold;
+        });
+        fetchNextPage();
+      });
+
+    // 2️⃣ Initialize counters
+    let positiveCount = 0;
+    let negativeCount = 0;
+
+    // 3️⃣ Fetch Client Ratings
+    await airbase(TABLES.RATINGS)
+      .select({
+        filterByFormula: `AND({Duda ID} = "${dudaId}")`,
+      })
+      .eachPage((records, fetchNextPage) => {
+        records.forEach((record) => {
+          const rating = record.get("Rating");
+          const sources = record.get("SourceDetails"); // linked record array
+
+          if (!rating || !sources || sources.length === 0) return;
+
+          // Assuming 1 source per record
+          const sourceId = sources[0];
+          const threshold = sourceThresholdMap[sourceId] ?? 0;
+
+          if (rating >= threshold) {
+            positiveCount++;
+          } else {
+            negativeCount++;
+          }
+        });
+
+        fetchNextPage();
+      });
+
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: {
+        positive: positiveCount,
+        negative: negativeCount,
+        total: positiveCount + negativeCount,
+      },
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getQueueSummaryBySiteId,
   getQueueRecordsBySiteId,
   getClientMessageSummaryBySiteId,
   getClientRatingsSummaryBySiteId,
+  getRatingSummary,
 };
 
 //https://externalcontent.remedyconnect.com/api/reviewbuilder/getQueueRecordsBySiteId/946f7a96?status=Finished&filterType=current_week

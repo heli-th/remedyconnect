@@ -18,7 +18,7 @@ const {
 
 const { getRatingsByDudaId, insertRating } = require("../controllers/ReviewBuilder/RBRatingsController");
 const { fetchConfigsByDudaId, updateConfigsByDudaId, getTimeZonesList } = require("../controllers/ReviewBuilder/RBConfigsController");
-const { getQueueSummaryBySiteId, getQueueRecordsBySiteId, getClientMessageSummaryBySiteId, getClientRatingsSummaryBySiteId } = require("../controllers/ReviewBuilder/DashboardConroller");
+const { getQueueSummaryBySiteId, getQueueRecordsBySiteId, getClientMessageSummaryBySiteId, getClientRatingsSummaryBySiteId, getRatingSummary } = require("../controllers/ReviewBuilder/DashboardConroller");
 
 const router = express.Router();
 // RBController routes
@@ -46,5 +46,6 @@ router.get("/getQueueSummaryBySiteId/:dudaId", getQueueSummaryBySiteId);
 router.get("/getQueueRecordsBySiteId/:dudaId", getQueueRecordsBySiteId);
 router.get("/getClientMessageSummaryBySiteId/:dudaId", getClientMessageSummaryBySiteId);
 router.get("/getClientRatingsSummaryBySiteId/:dudaId", getClientRatingsSummaryBySiteId);
+router.get("/getRatingSummary/:dudaId", getRatingSummary);
 
 module.exports = router;
