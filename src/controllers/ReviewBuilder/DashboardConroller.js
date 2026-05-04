@@ -79,7 +79,7 @@ const buildFilterFormula = ({ dudaId, status, filterType }) => {
   return conditions.length ? `AND(${conditions.join(",")})` : "";
 };
 
-function buildFilter({ dudaId, status, startDate, endDate }) {
+function buildFilter({ type, dudaId, status, startDate, endDate }) {
   let conditions = [];
 
   if (dudaId) {
@@ -90,7 +90,8 @@ function buildFilter({ dudaId, status, startDate, endDate }) {
     conditions.push(`{Status} = '${status}'`);
   }
 
-  if (startDate && endDate) {
+
+  if (startDate && endDate && type === "message_summary") {
     conditions.push(
       `AND(
         IS_AFTER({Created}, '${startDate}'),
@@ -98,6 +99,16 @@ function buildFilter({ dudaId, status, startDate, endDate }) {
       )`
     );
   }
+
+   if (startDate && endDate && type === "ratings_summary") {
+    conditions.push(
+      `AND(
+        IS_AFTER({Reviewed At}, '${startDate}'),
+        IS_BEFORE({Reviewed At}, '${endDate}')
+      )`
+    );
+  }
+
 
   if (!conditions.length) return "";
 
@@ -244,14 +255,14 @@ const getQueueRecordsBySiteId = async (req, res) => {
   }
 };
 
-/* Get client summary by site ID */
+/* Get client Messages Summary by site ID */
 const getClientMessageSummaryBySiteId = async (req, res) => {
   try {
     const { dudaId } = req.params;
 
     const {
       status,
-      pageSize = 5,
+      pageSize = 20,
       offset,
       filterType = "this_week",
     } = req.query;
@@ -292,6 +303,7 @@ const getClientMessageSummaryBySiteId = async (req, res) => {
     // FILTER FORMULA
     // ─────────────────────────────────────────
     const filterFormula = buildFilter({
+      type: "message_summary",
       dudaId,
       status,
       startDate,
@@ -370,11 +382,140 @@ const getClientMessageSummaryBySiteId = async (req, res) => {
   }
 };
 
+/* Get client Ratings Summary by site ID */
+const getClientRatingsSummaryBySiteId = async (req, res) => {
+  try {
+    const { dudaId } = req.params;
+
+    const {
+      status,
+      pageSize = 20,
+      offset,
+      filterType = "this_week",
+    } = req.query;
+
+    // ─────────────────────────────────────────
+    // DATE RANGE LOGIC
+    // ─────────────────────────────────────────
+    const now = dayjs();
+    let startDate, endDate;
+
+    switch (filterType) {
+      case "this_week":
+        startDate = now.startOf("week").toISOString();
+        endDate = now.toISOString();
+        break;
+      case "prev_7":
+        startDate = now.subtract(6, "day").startOf("day").toISOString();
+        endDate = now.toISOString();
+        break;
+      case "prev_30":
+        startDate = now.subtract(29, "day").startOf("day").toISOString();
+        endDate = now.toISOString();
+        break;
+      case "this_month":
+        startDate = now.startOf("month").toISOString();
+        endDate = now.toISOString();
+        break;
+      case "prev_month":
+        startDate = now.subtract(1, "month").startOf("month").toISOString();
+        endDate = now.subtract(1, "month").endOf("month").toISOString();
+        break;
+      default:
+        startDate = now.subtract(6, "day").toISOString();
+        endDate = now.toISOString();
+    }
+
+    // ─────────────────────────────────────────
+    // FILTER FORMULA
+    // ─────────────────────────────────────────
+    const filterFormula = buildFilter({
+      type: "ratings_summary",
+      dudaId,
+      status,
+      startDate,
+      endDate,
+    });
+
+    // ─────────────────────────────────────────
+    // FETCH ALL RECORDS (for total count)
+    // ─────────────────────────────────────────
+    let allRecords = [];
+
+    await airbase(TABLES.RATINGS)
+      .select({
+        filterByFormula: filterFormula || undefined,
+        pageSize: 100,
+      })
+      .eachPage((records, fetchNextPage) => {
+        allRecords.push(...records);
+        fetchNextPage();
+      });
+
+    // ─────────────────────────────────────────
+    // TOTAL COUNT
+    // ─────────────────────────────────────────
+    const totalCount = allRecords.length;
+
+    // // ─────────────────────────────────────────
+    // // STATUS COUNTS (important for your widget)
+    // // ─────────────────────────────────────────
+    // const statusCounts = {};
+
+    // allRecords.forEach((rec) => {
+    //   const s = rec.get("Status") || "Unknown";
+    //   statusCounts[s] = (statusCounts[s] || 0) + 1;
+    // });
+
+    // ─────────────────────────────────────────
+    // PAGINATION (manual slicing)
+    // ─────────────────────────────────────────
+    let startIndex = 0;
+
+    if (offset) {
+      startIndex = parseInt(offset, 10);
+    }
+
+    const paginatedRecords = allRecords.slice(
+      startIndex,
+      startIndex + parseInt(pageSize),
+    );
+
+    const nextOffset =
+      startIndex + parseInt(pageSize) < totalCount
+        ? startIndex + parseInt(pageSize)
+        : null;
+
+    // ─────────────────────────────────────────
+    // RESPONSE
+    // ─────────────────────────────────────────
+    res.json({
+      success: true,
+      totalCount,
+      nextOffset,
+      hasMore: !!nextOffset,
+      records: paginatedRecords.map((rec) => ({
+        id: rec.id,
+        ...rec.fields,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+
 module.exports = {
   getQueueSummaryBySiteId,
   getQueueRecordsBySiteId,
   getClientMessageSummaryBySiteId,
+  getClientRatingsSummaryBySiteId,
 };
 
 //https://externalcontent.remedyconnect.com/api/reviewbuilder/getQueueRecordsBySiteId/946f7a96?status=Finished&filterType=current_week
 //http://localhost:3000/api/reviewbuilder/getClientMessageSummaryBySiteId/946f7a96?status=Finished&filterType=current_week
+//http://localhost:3000/api/reviewbuilder/getClientRatingsSummaryBySiteId/946f7a96?filterType=current_week
