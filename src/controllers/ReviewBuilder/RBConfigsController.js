@@ -269,7 +269,8 @@ const fetchConfigsByDudaId = async (req, res) => {
  *   "autoApproveRatings": true,
  *   "notificationEmails": ["test1@example.com", "test2@example.com"],
  *   "validStartTime": "09:00",
- *   "validEndTime": "18:00"
+ *   "validEndTime": "18:00",
+ *   "clientDomainName": "example.com"
  * }
  */
 const updateConfigsByDudaId = async (req, res) => {
@@ -281,6 +282,7 @@ const updateConfigsByDudaId = async (req, res) => {
       notificationEmails,
       validStartTime,
       validEndTime,
+      clientDomainName,
     } = req.body || {};
 
     // -----------------------------
@@ -293,7 +295,8 @@ const updateConfigsByDudaId = async (req, res) => {
     const hasClientMasterUpdate =
       timeZoneRecordId !== undefined ||
       autoApproveRatings !== undefined ||
-      notificationEmails !== undefined;
+      notificationEmails !== undefined ||
+      clientDomainName !== undefined;
 
     const hasSendingConfigUpdate =
       validStartTime !== undefined || validEndTime !== undefined;
@@ -353,6 +356,29 @@ const updateConfigsByDudaId = async (req, res) => {
         .json(RESTRESPONSE(false, "autoApproveRatings must be true or false"));
     }
 
+    // -----------------------------
+    // Validate Client Domain Name
+    // -----------------------------
+    if (clientDomainName !== undefined) {
+      if (
+        typeof clientDomainName !== "string" ||
+        !clientDomainName.trim()
+      ) {
+        return res.status(400).json(
+          RESTRESPONSE(false, "clientDomainName must be a valid string")
+        );
+      }
+
+      // Optional: basic domain format validation
+      const domainRegex =
+        /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/;
+
+      if (!domainRegex.test(clientDomainName.trim())) {
+        return res.status(400).json(
+          RESTRESPONSE(false, "Invalid domain format")
+        );
+      }
+    }
     // -----------------------------
     // Validate Notification Emails
     // -----------------------------
@@ -473,6 +499,9 @@ const updateConfigsByDudaId = async (req, res) => {
         clientMasterFieldsToUpdate["Notification Emails"] =
           normalizedEmailList.join(", ");
       }
+      if (clientDomainName !== undefined) {
+        clientMasterFieldsToUpdate["Client Domain Name"] = clientDomainName.trim();
+      }
 
       const updatedClientRecord = await airbase(TABLES.CLIENT_MASTER).update(
         rawClientRecord.id,
@@ -590,6 +619,7 @@ const updateConfigsByDudaId = async (req, res) => {
       sourceBy: updatedClientMaster["Source By"],
       autoApproveRatings: updatedClientMaster["Auto Approve Ratings"],
       notificationEmails: updatedClientMaster["Notification Emails"],
+      clientDomainName: updatedClientMaster["Client Domain Name"],
       linkedRecords: {
         timeZone: latestTimeZone,
         updatedSendingConfigs,
